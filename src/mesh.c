@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "array.h"
 #include "mesh.h"
 
@@ -51,4 +52,34 @@ void load_cube_mesh_data(void)
         array_push(mesh.faces, cube_faces[i]);
     };
     mesh.rotation = (vec3_t){0, 0, 0};
+};
+
+void load_obj_file_data(char *pathname)
+{
+    FILE *file;
+    file = fopen(pathname, "r");
+    assert(file);
+
+    char line[255];
+
+    while (fgets(line, sizeof(line), file) != NULL)
+    {
+        if (line[0] == 'v' && line[1] == ' ')
+        {
+
+            vec3_t vertex;
+            sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
+            array_push(mesh.vertices, vertex);
+        }
+        else if (line[0] == 'f' && line[1] == ' ')
+        {
+
+            face_t face;
+            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%*d", &face.a, &face.b, &face.c);
+            array_push(mesh.faces, face);
+        };
+    };
+    mesh.rotation = (vec3_t){0, 0, 0};
+
+    fclose(file);
 };
