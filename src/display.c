@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "display.h"
 
 SDL_Window *window = NULL;
@@ -42,7 +43,6 @@ bool initialize_window(void)
 
 void destroy_window(void)
 {
-    free(colour_buffer);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -64,9 +64,9 @@ void clear_colour_buffer(uint32_t colour)
 
 void draw_grid(uint32_t line_colour, int grid_spacing)
 {
-    for (int y = 1; y < window_height; y++)
+    for (int y = grid_spacing; y < window_height; y += grid_spacing)
     {
-        for (int x = 1; x < window_width; x++)
+        for (int x = grid_spacing; x < window_width; x += grid_spacing)
         {
             if (x % grid_spacing == 0 || y % grid_spacing == 0)
             {
@@ -94,3 +94,96 @@ void draw_rect(int x, int y, int width, int height, uint32_t colour)
         };
     };
 };
+
+void draw_line(int x0, int y0, int x1, int y1, uint32_t colour)
+{
+    int delta_x = x1 - x0;
+    int delta_y = y1 - y0;
+
+    int side_length = abs(delta_x) > abs(delta_y) ? abs(delta_x) : abs(delta_y);
+
+    float x_inc = delta_x / (float)side_length;
+    float y_inc = delta_y / (float)side_length;
+
+    float current_x = x0;
+    float current_y = y0;
+
+    for (int i = 0; i <= side_length; i++)
+    {
+        draw_pixel(round(current_x), round(current_y), colour);
+        current_x += x_inc;
+        current_y += y_inc;
+    };
+};
+
+// Bresenham's Algo implementation, to explore further another time
+// void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
+//     int index = x0 + y0 * window_width;
+//     if (x0 == x1 && y0 == y1) { // Draw single pixel:
+//         DRAW_PIXEL(index, color);
+//         return;
+//     }
+
+//     int dx = 1;
+//     int dy = 1;
+//     int run  = x1 - x0;
+//     int rise = y1 - y0;
+//     if (x0 > x1) {
+//         dx = -1;
+//         run  = x0 - x1;
+//     }
+
+//     int index_inc_per_line = window_width;
+//     if (y0 > y1) {
+//         dy = -1;
+//         rise = y0 - y1;
+//         index_inc_per_line = -window_width;
+//     }
+
+//     // Configure for a trivial line (horizontal, vertical or diagonal, default to a shallow line):
+//     int inc = dx;
+//     int start = x0;
+//     int end = x1 + inc;
+//     int index_inc = dx;
+//     if (rise > run) { // Reconfigure for a steep line:
+//         inc = dy;
+//         start = y0;
+//         end = y1 + inc;
+//         index_inc = index_inc_per_line;
+//     }
+
+//     if (rise == run || !rise || !run) { // Draw a trivial line:
+//         if (rise && run) // Reconfigure for a diagonal line:
+//             index_inc = index_inc_per_line + dx;
+
+//         for (int i = start; i != end; i += inc, index += index_inc)
+//             DRAW_PIXEL(index, color);
+
+//         return;
+//     }
+
+//     // Configure for a non-trivial line (default to a shallow line):
+//     int rise_twice = rise + rise;
+//     int run_twice  = run + run;
+//     int threshold = run;
+//     int error_dec = run_twice;
+//     int error_inc = rise_twice;
+//     int secondary_inc = index_inc_per_line;
+//     if (rise > run) { // Reconfigure for a steep line:
+//         secondary_inc = dx;
+//         threshold = rise;
+//         error_dec = rise_twice;
+//         error_inc = run_twice;
+//     }
+
+//     int error = 0;
+//     for (int i = start; i != end; i += inc) {
+//         DRAW_PIXEL(index, color);
+//         index += index_inc;
+//         error += error_inc;
+//         if (error > threshold) {
+//             error -= error_dec;
+//             index += secondary_inc;
+//         }
+//     }
+// }

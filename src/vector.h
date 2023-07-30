@@ -14,10 +14,6 @@ typedef struct
     float z;
 } vec3_t;
 
-#define N_POINTS (9 * 9 * 9)
-vec3_t cube_points[N_POINTS];
-
-void initialize_cube_points(void);
 vec2_t ortho_project(vec3_t point);
 vec2_t perspect_project(vec3_t point);
 vec3_t vec3_rotate_x(vec3_t v, float angle);
