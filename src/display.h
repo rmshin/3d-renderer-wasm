@@ -24,4 +24,18 @@ void draw_pixel(int x, int y, uint32_t colour);
 void draw_rect(int x, int y, int width, int height, uint32_t colour);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t colour);
 
+enum Display_Mode
+{
+    DISPLAY_WIRE,
+    DISPLAY_WIRE_VERTEX,
+    DISPLAY_FILL,
+    DISPLAY_FILL_WIRE,
+} display_mode;
+
+enum Cull_Method
+{
+    CULL_NONE,
+    CULL_BACKFACE,
+} cull_method;
+
 #endif
