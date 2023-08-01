@@ -1,4 +1,5 @@
 #include <math.h>
+#include "util.h"
 #include "triangle.h"
 #include "display.h"
 
@@ -7,13 +8,6 @@ void draw_triangle(triangle_t triangle, uint32_t colour)
     draw_line(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x, triangle.points[1].y, colour);
     draw_line(triangle.points[1].x, triangle.points[1].y, triangle.points[2].x, triangle.points[2].y, colour);
     draw_line(triangle.points[2].x, triangle.points[2].y, triangle.points[0].x, triangle.points[0].y, colour);
-};
-
-void swap(int *a, int *b)
-{
-    int temp = *a;
-    *a = *b;
-    *b = temp;
 };
 
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int mx, int my, uint32_t colour)

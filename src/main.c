@@ -1,12 +1,16 @@
 #include <assert.h>
+#include "util.h"
 #include "array.h"
 #include "display.h"
 #include "vector.h"
+#include "matrix.h"
 #include "mesh.h"
+#include "lighting.h"
 
 triangle_t *triangles_to_render = NULL;
 
 vec3_t camera_position = {0, 0, 0};
+mat4_t projection_matrix;
 
 uint32_t prev_frame_time = 0;
 bool is_running = false;
@@ -21,7 +25,12 @@ void setup(void)
     colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
     assert(colour_buffer_texture);
 
-    load_obj_file_data("./assets/cube.obj");
+    float fov = M_PI / 2.0;
+    float aspect = (float)window_height / (float)window_width;
+    projection_matrix = mat4_make_projection(fov, aspect, 1.0, 1000.0);
+
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/crab.obj");
 };
 
 void process_input(void)
@@ -80,9 +89,33 @@ void update(void)
     // initialise triangles array
     triangles_to_render = NULL;
 
-    mesh.rotation.y += 0.01;
-    mesh.rotation.x += 0.01;
-    mesh.rotation.z += 0.01;
+    mesh.rotation.y += 0.02;
+    // mesh.rotation.x += 0.03;
+    // mesh.rotation.z += 0.02;
+    // mesh.scale.x += 0.002;
+    // mesh.scale.y += 0.002;
+    // mesh.scale.z += 0.002;
+    // mesh.translation.x += 0.05;
+    // mesh.translation.y += 0.05;
+    mesh.translation.z = 5.0;
+
+    // more interesting transformations
+    // t = SDL_GetTicks() * 0.0005;
+
+    // mesh.rotation.x += 0.02;
+
+    // mesh.scale.x = sin(t) + 1;
+    // mesh.scale.y = sin(t) + 1;
+    // mesh.scale.z = sin(t) + 1;
+
+    // mesh.translation.x = tan(t) * 2;
+    // mesh.translation.y = sin(t) * 2.2;
+
+    mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+    mat4_t rotx_matrix = mat4_make_rotation_x(mesh.rotation.x);
+    mat4_t roty_matrix = mat4_make_rotation_y(mesh.rotation.y);
+    mat4_t rotz_matrix = mat4_make_rotation_z(mesh.rotation.z);
+    mat4_t translate_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
 
     for (int i = 0; i < array_length(mesh.faces); i++)
     {
@@ -93,31 +126,48 @@ void update(void)
             mesh.vertices[mesh_face.c - 1],
         };
 
-        vec3_t transformed_vertices[3];
+        vec4_t transformed_vertices[3];
         for (int j = 0; j < 3; j++)
         {
-            vec3_t transformed_vertex = vec3_rotate_x(face_vertices[j], mesh.rotation.x);
-            transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-            transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
-            transformed_vertex.z += 5;
+            vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
+
+            mat4_t world_matrix = scale_matrix;
+            world_matrix = mat4_mul_mat4(rotx_matrix, world_matrix);
+            world_matrix = mat4_mul_mat4(roty_matrix, world_matrix);
+            world_matrix = mat4_mul_mat4(rotz_matrix, world_matrix);
+            world_matrix = mat4_mul_mat4(translate_matrix, world_matrix);
+
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
             transformed_vertices[j] = transformed_vertex;
         };
 
         if (cull_method == CULL_NONE || !cull_face(transformed_vertices, camera_position))
         {
             triangle_t projected_triangle;
+            // for sorting faces by depth (painter's algorithm)
+            float depth = 0.0;
             for (int j = 0; j < 3; j++)
             {
                 // project & translate to center
-                vec2_t projected = perspect_project(transformed_vertices[j]);
-                projected.x += window_width / 2;
-                projected.y += window_height / 2;
-                projected_triangle.points[j] = projected;
+                vec4_t projected = mat4_mul_vec4_project(projection_matrix, transformed_vertices[j]);
+                projected.x *= window_width / 2.0;
+                projected.y *= window_height / 2.0;
+                projected.x += window_width / 2.0;
+                projected.y += window_height / 2.0;
+                projected_triangle.points[j] = (vec2_t){projected.x, projected.y};
+                // sum all z values of vertices
+                depth += transformed_vertices[j].z;
             };
 
+            float shading_factor = calc_shading_factor(transformed_vertices, light_source.direction);
+            projected_triangle.colour = light_apply_intensity(mesh_face.colour, shading_factor);
+
+            projected_triangle.avg_depth = depth / 3.0;
             array_push(triangles_to_render, projected_triangle)
         };
     };
+    // sort by average depth
+    quick_sort_triangles(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 };
 
 void draw_triangles(void)
@@ -135,7 +185,7 @@ void draw_triangles(void)
                 triangle.points[1].y,
                 triangle.points[2].x,
                 triangle.points[2].y,
-                0xFFFAC70D);
+                triangle.colour);
         }
         if (display_mode == DISPLAY_WIRE || display_mode == DISPLAY_WIRE_VERTEX || display_mode == DISPLAY_FILL_WIRE)
         {

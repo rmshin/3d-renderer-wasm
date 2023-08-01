@@ -16,6 +16,14 @@ typedef struct
     float z;
 } vec3_t;
 
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+    float w;
+} vec4_t;
+
 // 3d -> 2d vector projection functions
 vec2_t ortho_project(vec3_t point);
 vec2_t perspect_project(vec3_t point);
@@ -43,6 +51,11 @@ vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);
 vec3_t vec3_rotate_z(vec3_t v, float angle);
 
-bool cull_face(vec3_t face_vertices[3], vec3_t camera_pos);
+bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos);
+
+// 4d vector functions
+vec4_t vec4_from_vec3(vec3_t v);
+vec3_t vec3_from_vec4(vec4_t v);
+float vec4_dot(vec4_t v1, vec4_t v2);
 
 #endif
