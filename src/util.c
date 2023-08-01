@@ -8,6 +8,13 @@ void swap(int *a, int *b)
     *b = temp;
 };
 
+void float_swap(float *a, float *b)
+{
+    float temp = *a;
+    *a = *b;
+    *b = temp;
+};
+
 void swap_triangle(triangle_t *a, triangle_t *b)
 {
     triangle_t temp = *a;

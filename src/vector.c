@@ -141,7 +141,12 @@ bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos)
     // return true if dot < 0, otherwise false
     return dot < 0;
 };
+float vec4_dot(vec4_t v1, vec4_t v2)
+{
+    return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z) + (v1.w * v2.w);
+};
 
+// conversion functions
 vec4_t vec4_from_vec3(vec3_t v)
 {
     return (vec4_t){v.x, v.y, v.z, 1.0};
@@ -150,7 +155,7 @@ vec3_t vec3_from_vec4(vec4_t v)
 {
     return (vec3_t){v.x, v.y, v.z};
 }
-float vec4_dot(vec4_t v1, vec4_t v2)
+vec2_t vec2_from_vec4(vec4_t v)
 {
-    return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z) + (v1.w * v2.w);
-};
+    return (vec2_t){v.x, v.y};
+}

@@ -30,6 +30,8 @@ enum Display_Mode
     DISPLAY_WIRE_VERTEX,
     DISPLAY_FILL,
     DISPLAY_FILL_WIRE,
+    DISPLAY_TEXTURE,
+    DISPLAY_TEXTURE_WIRE,
 } display_mode;
 
 enum Cull_Method

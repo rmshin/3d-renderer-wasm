@@ -54,8 +54,11 @@ vec3_t vec3_rotate_z(vec3_t v, float angle);
 bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos);
 
 // 4d vector functions
+float vec4_dot(vec4_t v1, vec4_t v2);
+
+// conversion functions
 vec4_t vec4_from_vec3(vec3_t v);
 vec3_t vec3_from_vec4(vec4_t v);
-float vec4_dot(vec4_t v1, vec4_t v2);
+vec2_t vec2_from_vec4(vec4_t v);
 
 #endif

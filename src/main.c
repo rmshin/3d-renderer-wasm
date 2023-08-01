@@ -5,7 +5,9 @@
 #include "vector.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "triangle.h"
 #include "lighting.h"
+#include "texture.h"
 
 triangle_t *triangles_to_render = NULL;
 
@@ -29,8 +31,10 @@ void setup(void)
     float aspect = (float)window_height / (float)window_width;
     projection_matrix = mat4_make_projection(fov, aspect, 1.0, 1000.0);
 
-    // load_cube_mesh_data();
-    load_obj_file_data("./assets/crab.obj");
+    mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
+
+    load_cube_mesh_data();
+    // load_obj_file_data("./assets/crab.obj");
 };
 
 void process_input(void)
@@ -64,6 +68,14 @@ void process_input(void)
         {
             display_mode = DISPLAY_FILL_WIRE;
         }
+        else if (event.key.keysym.sym == SDLK_5)
+        {
+            display_mode = DISPLAY_TEXTURE;
+        }
+        else if (event.key.keysym.sym == SDLK_6)
+        {
+            display_mode = DISPLAY_TEXTURE_WIRE;
+        }
         else if (event.key.keysym.sym == SDLK_c)
         {
             cull_method = CULL_BACKFACE;
@@ -71,7 +83,7 @@ void process_input(void)
         else if (event.key.keysym.sym == SDLK_d)
         {
             cull_method = CULL_NONE;
-        };
+        }
         break;
     }
 };
@@ -82,7 +94,7 @@ void update(void)
     if (time_to_wait > 0 && time_to_wait <= TARGET_FRAME_TIME)
     {
         SDL_Delay(time_to_wait);
-    };
+    }
 
     prev_frame_time = SDL_GetTicks();
 
@@ -90,7 +102,7 @@ void update(void)
     triangles_to_render = NULL;
 
     mesh.rotation.y += 0.02;
-    // mesh.rotation.x += 0.03;
+    // mesh.rotation.x += 0.02;
     // mesh.rotation.z += 0.02;
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.002;
@@ -139,7 +151,7 @@ void update(void)
 
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
             transformed_vertices[j] = transformed_vertex;
-        };
+        }
 
         if (cull_method == CULL_NONE || !cull_face(transformed_vertices, camera_position))
         {
@@ -154,18 +166,24 @@ void update(void)
                 projected.y *= window_height / 2.0;
                 projected.x += window_width / 2.0;
                 projected.y += window_height / 2.0;
-                projected_triangle.points[j] = (vec2_t){projected.x, projected.y};
+                projected_triangle.points[j] = (vec4_t){projected.x, projected.y, projected.z, projected.w};
                 // sum all z values of vertices
                 depth += transformed_vertices[j].z;
-            };
+            }
+
+            // texture coords
+            projected_triangle.colour = 0xFFFFFFF;
+            projected_triangle.tex_coords[0] = (tex2_t){mesh_face.a_uv.u, mesh_face.a_uv.v};
+            projected_triangle.tex_coords[1] = (tex2_t){mesh_face.b_uv.u, mesh_face.b_uv.v};
+            projected_triangle.tex_coords[2] = (tex2_t){mesh_face.c_uv.u, mesh_face.c_uv.v};
 
             float shading_factor = calc_shading_factor(transformed_vertices, light_source.direction);
             projected_triangle.colour = light_apply_intensity(mesh_face.colour, shading_factor);
 
             projected_triangle.avg_depth = depth / 3.0;
             array_push(triangles_to_render, projected_triangle)
-        };
-    };
+        }
+    }
     // sort by average depth
     quick_sort_triangles(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 };
@@ -187,16 +205,25 @@ void draw_triangles(void)
                 triangle.points[2].y,
                 triangle.colour);
         }
-        if (display_mode == DISPLAY_WIRE || display_mode == DISPLAY_WIRE_VERTEX || display_mode == DISPLAY_FILL_WIRE)
+        if (display_mode == DISPLAY_TEXTURE || display_mode == DISPLAY_TEXTURE_WIRE)
+        {
+            // draw texture triangle
+            draw_textured_triangle(
+                triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.tex_coords[0].u, triangle.tex_coords[0].v,
+                triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.tex_coords[1].u, triangle.tex_coords[1].v,
+                triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.tex_coords[2].u, triangle.tex_coords[2].v,
+                mesh_texture);
+        }
+        if (display_mode == DISPLAY_WIRE || display_mode == DISPLAY_WIRE_VERTEX || display_mode == DISPLAY_FILL_WIRE || display_mode == DISPLAY_TEXTURE_WIRE)
         {
             draw_triangle(triangle, 0xFFFF0000);
-        };
+        }
         if (display_mode == DISPLAY_WIRE_VERTEX)
         {
             draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFAC70D);
             draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFAC70D);
             draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFAC70D);
-        };
+        }
     };
 };
 
@@ -229,7 +256,7 @@ int main(void)
         process_input();
         update();
         render();
-    };
+    }
 
     destroy_window();
     free_resources();
