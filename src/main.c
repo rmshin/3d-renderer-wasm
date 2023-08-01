@@ -24,17 +24,16 @@ void setup(void)
 
     colour_buffer = (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
     assert(colour_buffer);
-    colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
+    colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
     assert(colour_buffer_texture);
 
     float fov = M_PI / 2.0;
     float aspect = (float)window_height / (float)window_width;
     projection_matrix = mat4_make_projection(fov, aspect, 1.0, 1000.0);
 
-    mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
-
-    load_cube_mesh_data();
-    // load_obj_file_data("./assets/crab.obj");
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/crab.obj");
+    load_png_texture_data("./assets/crab.png");
 };
 
 void process_input(void)
@@ -133,9 +132,9 @@ void update(void)
     {
         face_t mesh_face = mesh.faces[i];
         vec3_t face_vertices[3] = {
-            mesh.vertices[mesh_face.a - 1],
-            mesh.vertices[mesh_face.b - 1],
-            mesh.vertices[mesh_face.c - 1],
+            mesh.vertices[mesh_face.a],
+            mesh.vertices[mesh_face.b],
+            mesh.vertices[mesh_face.c],
         };
 
         vec4_t transformed_vertices[3];
@@ -216,13 +215,13 @@ void draw_triangles(void)
         }
         if (display_mode == DISPLAY_WIRE || display_mode == DISPLAY_WIRE_VERTEX || display_mode == DISPLAY_FILL_WIRE || display_mode == DISPLAY_TEXTURE_WIRE)
         {
-            draw_triangle(triangle, 0xFFFF0000);
+            draw_triangle(triangle, 0xFFFFFFFF);
         }
         if (display_mode == DISPLAY_WIRE_VERTEX)
         {
-            draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFAC70D);
-            draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFAC70D);
-            draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFAC70D);
+            draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFF0000FF);
+            draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFF0000FF);
+            draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFF0000FF);
         }
     };
 };
@@ -243,6 +242,7 @@ void free_resources(void)
     array_free(mesh.faces);
     array_free(mesh.vertices);
     free(colour_buffer);
+    upng_free(png_texture);
 };
 
 int main(void)

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "array.h"
 #include "mesh.h"
+#include "texture.h"
 
 mesh_t mesh = {
     .vertices = NULL,
@@ -61,27 +62,40 @@ void load_obj_file_data(char *pathname)
     file = fopen(pathname, "r");
     assert(file);
 
-    char line[255];
+    char line[512];
 
+    tex2_t *tex_coords = NULL;
     while (fgets(line, sizeof(line), file) != NULL)
     {
         if (line[0] == 'v' && line[1] == ' ')
         {
-
             vec3_t vertex;
             sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
             array_push(mesh.vertices, vertex);
         }
+        else if (line[0] == 'v' && line[1] == 't')
+        {
+            tex2_t tex_coord;
+            sscanf(line, "vt %f %f%*s", &tex_coord.u, &tex_coord.v);
+            array_push(tex_coords, tex_coord);
+        }
         else if (line[0] == 'f' && line[1] == ' ')
         {
-
+            int texture_indices[3];
             face_t face;
-            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%*d", &face.a, &face.b, &face.c);
-            face.colour = 0xFFFAC70D;
+            sscanf(line, "f %d/%d/%*d %d/%d/%*d %d/%d/%*d", &face.a, &texture_indices[0], &face.b, &texture_indices[1], &face.c, &texture_indices[2]);
+            face.a -= 1;
+            face.b -= 1;
+            face.c -= 1;
+            face.a_uv = tex_coords[texture_indices[0] - 1];
+            face.b_uv = tex_coords[texture_indices[1] - 1];
+            face.c_uv = tex_coords[texture_indices[2] - 1];
+            face.colour = 0xFF0DC7FA;
             array_push(mesh.faces, face);
         };
     };
     mesh.rotation = (vec3_t){0, 0, 0};
 
+    array_free(tex_coords);
     fclose(file);
 };

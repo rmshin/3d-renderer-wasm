@@ -1,10 +1,27 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "upng.h"
 #include "texture.h"
 
+upng_t *png_texture = NULL;
 uint32_t *mesh_texture = NULL;
 int texture_width = 64;
 int texture_height = 64;
+
+void load_png_texture_data(char *pathname)
+{
+    png_texture = upng_new_from_file(pathname);
+    if (png_texture != NULL)
+    {
+        upng_decode(png_texture);
+        if (upng_get_error(png_texture) == UPNG_EOK)
+        {
+            mesh_texture = (uint32_t *)upng_get_buffer(png_texture);
+            texture_width = upng_get_width(png_texture);
+            texture_height = upng_get_height(png_texture);
+        }
+    }
+};
 
 const uint8_t REDBRICK_TEXTURE[] = {
     0x38,
