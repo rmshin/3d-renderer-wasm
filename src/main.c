@@ -22,6 +22,8 @@ void setup(void)
     display_mode = DISPLAY_WIRE;
     cull_method = CULL_BACKFACE;
 
+    w_buffer = (float *)malloc(sizeof(float) * window_width * window_height);
+    assert(w_buffer);
     colour_buffer = (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
     assert(colour_buffer);
     colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
@@ -32,8 +34,8 @@ void setup(void)
     projection_matrix = mat4_make_projection(fov, aspect, 1.0, 1000.0);
 
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/crab.obj");
-    load_png_texture_data("./assets/crab.png");
+    load_obj_file_data("./assets/drone.obj");
+    load_png_texture_data("./assets/drone.png");
 };
 
 void process_input(void)
@@ -97,8 +99,7 @@ void update(void)
 
     prev_frame_time = SDL_GetTicks();
 
-    // initialise triangles array
-    triangles_to_render = NULL;
+    array_reset(triangles_to_render);
 
     mesh.rotation.y += 0.02;
     // mesh.rotation.x += 0.02;
@@ -155,8 +156,6 @@ void update(void)
         if (cull_method == CULL_NONE || !cull_face(transformed_vertices, camera_position))
         {
             triangle_t projected_triangle;
-            // for sorting faces by depth (painter's algorithm)
-            float depth = 0.0;
             for (int j = 0; j < 3; j++)
             {
                 // project & translate to center
@@ -166,8 +165,6 @@ void update(void)
                 projected.x += window_width / 2.0;
                 projected.y += window_height / 2.0;
                 projected_triangle.points[j] = (vec4_t){projected.x, projected.y, projected.z, projected.w};
-                // sum all z values of vertices
-                depth += transformed_vertices[j].z;
             }
 
             // texture coords
@@ -179,12 +176,9 @@ void update(void)
             float shading_factor = calc_shading_factor(transformed_vertices, light_source.direction);
             projected_triangle.colour = light_apply_intensity(mesh_face.colour, shading_factor);
 
-            projected_triangle.avg_depth = depth / 3.0;
             array_push(triangles_to_render, projected_triangle)
         }
     }
-    // sort by average depth
-    quick_sort_triangles(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 };
 
 void draw_triangles(void)
@@ -196,12 +190,9 @@ void draw_triangles(void)
         if (display_mode == DISPLAY_FILL_WIRE || display_mode == DISPLAY_FILL)
         {
             draw_filled_triangle(
-                triangle.points[0].x,
-                triangle.points[0].y,
-                triangle.points[1].x,
-                triangle.points[1].y,
-                triangle.points[2].x,
-                triangle.points[2].y,
+                triangle.points[0].x, triangle.points[0].y, triangle.points[0].w,
+                triangle.points[1].x, triangle.points[1].y, triangle.points[1].w,
+                triangle.points[2].x, triangle.points[2].y, triangle.points[2].w,
                 triangle.colour);
         }
         if (display_mode == DISPLAY_TEXTURE || display_mode == DISPLAY_TEXTURE_WIRE)
@@ -229,9 +220,9 @@ void draw_triangles(void)
 void render(void)
 {
     clear_colour_buffer(0xFF000000);
+    clear_w_buffer();
     draw_grid(0xFF3C3C3C, 20);
     draw_triangles();
-    array_free(triangles_to_render);
     render_colour_buffer();
 
     SDL_RenderPresent(renderer);
@@ -241,7 +232,9 @@ void free_resources(void)
 {
     array_free(mesh.faces);
     array_free(mesh.vertices);
+    array_free(triangles_to_render);
     free(colour_buffer);
+    free(w_buffer);
     upng_free(png_texture);
 };
 

@@ -5,74 +5,101 @@
 
 void draw_triangle(triangle_t triangle, uint32_t colour)
 {
-    draw_line(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x, triangle.points[1].y, colour);
-    draw_line(triangle.points[1].x, triangle.points[1].y, triangle.points[2].x, triangle.points[2].y, colour);
-    draw_line(triangle.points[2].x, triangle.points[2].y, triangle.points[0].x, triangle.points[0].y, colour);
+    draw_line(
+        triangle.points[0].x, triangle.points[0].y,
+        triangle.points[1].x, triangle.points[1].y,
+        colour);
+    draw_line(
+        triangle.points[1].x, triangle.points[1].y,
+        triangle.points[2].x, triangle.points[2].y,
+        colour);
+    draw_line(
+        triangle.points[2].x, triangle.points[2].y,
+        triangle.points[0].x, triangle.points[0].y,
+        colour);
 };
 
-void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int mx, int my, uint32_t colour)
-{
-    float slope_1 = (float)(x1 - x0) / (y1 - y0);
-    float slope_2 = (float)(mx - x0) / (my - y0);
-    float start_x = x0;
-    float end_x = x0;
-    for (int i = y0; i <= my; i++)
-    {
-        draw_line(round(start_x), i, round(end_x), i, colour);
-        start_x += slope_1;
-        end_x += slope_2;
-    };
-};
-
-void fill_flat_top_triangle(int x1, int y1, int mx, int my, int x2, int y2, uint32_t colour)
-{
-    float slope_1 = (float)(x1 - x2) / (y1 - y2);
-    float slope_2 = (float)(mx - x2) / (my - y2);
-    float start_x = x2;
-    float end_x = x2;
-    for (int i = y2; i >= y1; i--)
-    {
-        draw_line(round(start_x), i, round(end_x), i, colour);
-        start_x -= slope_1;
-        end_x -= slope_2;
-    };
-};
-
-void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t colour)
+void draw_filled_triangle(int x0, int y0, float w0, int x1, int y1, float w1, int x2, int y2, float w2, uint32_t colour)
 {
     // need to sort vertices by ascending y (y0 -> y1 -> y2)
     if (y0 > y1)
     {
         swap(&y0, &y1);
         swap(&x0, &x1);
+        float_swap(&w0, &w1);
     };
     if (y1 > y2)
     {
         swap(&y1, &y2);
         swap(&x1, &x2);
+        float_swap(&w1, &w2);
     };
     if (y0 > y1)
     {
         swap(&y0, &y1);
         swap(&x0, &x1);
+        float_swap(&w0, &w1);
     };
+    vec2_t a = {x0, y0};
+    vec2_t b = {x1, y1};
+    vec2_t c = {x2, y2};
 
-    if (y1 == y2)
-    {
-        fill_flat_bottom_triangle(x0, y0, x1, y1, x2, y2, colour);
-    }
-    else if (y0 == y1)
-    {
-        fill_flat_top_triangle(x1, y1, x0, y0, x2, y2, colour);
-    }
-    else
-    {
-        int my = y1;
-        int mx = (float)((x2 - x0) * (y1 - y0)) / (float)(y2 - y0) + x0;
+    // don't fully understand this part yet...
+    float slope_1 = 0;
+    float slope_2 = 0;
+    if (y1 - y0 != 0)
+        slope_1 = (float)(x1 - x0) / (y1 - y0);
+    if (y2 - y0 != 0)
+        slope_2 = (float)(x2 - x0) / (y2 - y0);
 
-        fill_flat_bottom_triangle(x0, y0, x1, y1, mx, my, colour);
-        fill_flat_top_triangle(x1, y1, mx, my, x2, y2, colour);
-    };
+    if (y1 - y0 != 0) // check this line as well...
+    {
+        for (int y = y0; y <= y1; y++) // has to be y1 -> why???
+        {
+            float x_start = x1 + (y - y1) * slope_1;
+            float x_end = x0 + (y - y0) * slope_2;
+
+            if (x_end < x_start)
+            {
+                float_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+            }
+
+            for (int x = round(x_start); x < round(x_end); x++)
+            {
+                vec3_t bary_weights = barycentric_weights(a, b, c, (vec2_t){x, y});
+                float interpolated_inverse_w = bary_weights.x / w0 + bary_weights.y / w1 + bary_weights.z / w2;
+                draw_pixel(x, y, interpolated_inverse_w, colour);
+            }
+        }
+    }
+
+    slope_1 = 0;
+    slope_2 = 0;
+    if (y2 - y1 != 0)
+        slope_1 = (float)(x2 - x1) / (y2 - y1);
+    if (y2 - y0 != 0)
+        slope_2 = (float)(x2 - x0) / (y2 - y0);
+
+    if (y2 - y1 != 0)
+    {
+        for (int y = y1; y <= y2; y++)
+        {
+            float x_start = x1 + (y - y1) * slope_1;
+            float x_end = x0 + (y - y0) * slope_2;
+
+            if (x_end < x_start)
+            {
+                float_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+            }
+
+            for (int x = round(x_start); x < round(x_end); x++)
+            {
+                vec3_t bary_weights = barycentric_weights(a, b, c, (vec2_t){x, y});
+                float interpolated_inverse_w = bary_weights.x / w0 + bary_weights.y / w1 + bary_weights.z / w2;
+                draw_pixel(x, y, interpolated_inverse_w, colour);
+            }
+        }
+    }
 };
 
 void draw_texel(
@@ -99,11 +126,12 @@ void draw_texel(
 
     float interpolated_u = (a_uv.u * A + b_uv.u * B + c_uv.u * C) / (A + B + C);
     float interpolated_v = (a_uv.v * A + b_uv.v * B + c_uv.v * C) / (A + B + C);
+    float interpolated_inverse_w = alpha / point_a.w + beta / point_b.w + gamma / point_c.w;
 
     int tex_x = abs((int)(interpolated_u * (texture_width - 1))) % texture_width;
     int tex_y = abs((int)(interpolated_v * (texture_height - 1))) % texture_height;
 
-    draw_pixel(x, y, texture[tex_y * texture_width + tex_x]);
+    draw_pixel(x, y, interpolated_inverse_w, texture[tex_y * texture_width + tex_x]);
 };
 
 void draw_textured_triangle(

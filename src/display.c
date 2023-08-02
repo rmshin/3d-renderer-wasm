@@ -7,6 +7,7 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_Texture *colour_buffer_texture = NULL;
 uint32_t *colour_buffer = NULL;
+float *w_buffer = NULL;
 int window_width = 800;
 int window_height = 600;
 
@@ -63,6 +64,14 @@ void clear_colour_buffer(uint32_t colour)
     };
 };
 
+void clear_w_buffer(void)
+{
+    for (int i = 0; i < window_width * window_height; i++)
+    {
+        w_buffer[i] = 0.0;
+    };
+};
+
 void draw_grid(uint32_t line_colour, int grid_spacing)
 {
     for (int y = grid_spacing; y < window_height; y += grid_spacing)
@@ -77,12 +86,18 @@ void draw_grid(uint32_t line_colour, int grid_spacing)
     };
 };
 
-void draw_pixel(int x, int y, uint32_t colour)
+void draw_pixel(int x, int y, float inverse_w, uint32_t colour)
 {
-    if (x >= 0 && x < window_width && y >= 0 && y < window_height)
+    // only render if current depth of pixel is in front of previous value
+    if (inverse_w > w_buffer[(y * window_width) + x])
     {
-        colour_buffer[(y * window_width) + x] = colour;
-    };
+        if (x >= 0 && x < window_width && y >= 0 && y < window_height)
+        {
+            colour_buffer[(y * window_width) + x] = colour;
+            // update w_buffer
+            w_buffer[(y * window_width) + x] = inverse_w;
+        };
+    }
 };
 
 void draw_rect(int x, int y, int width, int height, uint32_t colour)
@@ -91,7 +106,7 @@ void draw_rect(int x, int y, int width, int height, uint32_t colour)
     {
         for (int bx = x; bx < x + width; bx++)
         {
-            draw_pixel(bx, by, colour);
+            draw_pixel(bx, by, 1.0, colour); // always draw rectangles for now
         };
     };
 };
@@ -111,7 +126,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t colour)
 
     for (int i = 0; i <= side_length; i++)
     {
-        draw_pixel(round(current_x), round(current_y), colour);
+        draw_pixel(round(current_x), round(current_y), 1.0, colour);
         current_x += x_inc;
         current_y += y_inc;
     };
