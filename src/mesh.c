@@ -12,7 +12,7 @@ mesh_t mesh = {
     .scale = {1.0, 1.0, 1.0},
 };
 
-vec3_t cube_vertices[N_CUBE_VERTICES] = {
+const vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = -1}, // 1
     {.x = -1, .y = 1, .z = -1},  // 2
     {.x = 1, .y = 1, .z = -1},   // 3
@@ -23,7 +23,7 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = 1},  // 8
 };
 
-face_t cube_faces[N_CUBE_FACES] = {
+const face_t cube_faces[N_CUBE_FACES] = {
     // front
     {.a = 1, .b = 2, .c = 3, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = 0xFFFFFFFF},
     {.a = 1, .b = 3, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = 0xFFFFFFFF},

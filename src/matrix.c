@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <math.h>
 #include "matrix.h"
 #include "vector.h"
@@ -109,7 +110,7 @@ mat4_t mat4_make_projection(float fov, float aspect, float znear, float zfar)
 {
     mat4_t m = {.m = {{0}}};
     m.m[0][0] = aspect * 1 / tan(fov / 2);
-    m.m[1][1] = -1 / tan(fov / 2);
+    m.m[1][1] = -1 / tan(fov / 2); // invert y-axis so y grows upwards on screen
     m.m[2][2] = zfar / (zfar - znear);
     m.m[2][3] = -(zfar * znear / zfar - znear);
     m.m[3][2] = 1.0;
@@ -129,3 +130,22 @@ vec4_t mat4_mul_vec4_project(mat4_t perspective_matrix, vec4_t v)
 
     return projected;
 };
+
+mat4_t mat4_make_view(vec3_t target_pos, vec3_t camera_pos, vec3_t up_direction)
+{
+    vec3_t z = vec3_subtract(target_pos, camera_pos);
+    vec3_normalise(&z);
+    vec3_t x = vec3_cross(up_direction, z);
+    vec3_normalise(&x);
+    vec3_t y = vec3_cross(z, x);
+
+    mat4_t view_mat = {
+        .m = {
+            {x.x, x.y, x.z, -vec3_dot(x, camera_pos)},
+            {y.x, y.y, y.z, -vec3_dot(y, camera_pos)},
+            {z.x, z.y, z.z, -vec3_dot(z, camera_pos)},
+            {0, 0, 0, 1.0},
+        },
+    };
+    return view_mat;
+}

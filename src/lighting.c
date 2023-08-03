@@ -1,7 +1,16 @@
 #include "lighting.h"
 #include "vector.h"
 
-light_t light_source = {.direction = {0, 0, 1}};
+static light_t light_source;
+
+void init_light(vec3_t direction)
+{
+    light_source.direction = direction;
+};
+vec3_t get_light_direction(void)
+{
+    return light_source.direction;
+};
 
 uint32_t light_apply_intensity(uint32_t colour, float percentage_factor)
 {

@@ -9,11 +9,22 @@ typedef struct
     vec3_t position;
     vec3_t direction;
     vec3_t forward_velocity;
-    float yaw_angle;
+    float yaw;
+    float pitch;
 } camera_t;
 
-mat4_t look_at(vec3_t target_pos, vec3_t camera_pos, vec3_t up_direction);
+void init_camera(vec3_t pos, vec3_t direction);
+vec3_t get_camera_lookat_target(void);
 
-extern camera_t camera;
+vec3_t get_camera_position(void);
+vec3_t get_camera_direction(void);
+vec3_t get_camera_forward_velocity(void);
+float get_camera_yaw(void);
+float get_camera_pitch(void);
+void set_camera_position(vec3_t p);
+void set_camera_direction(vec3_t d);
+void set_camera_forward_velocity(vec3_t v);
+void rotate_camera_yaw(float y);
+void rotate_camera_pitch(float p);
 
 #endif

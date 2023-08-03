@@ -68,7 +68,13 @@ void draw_filled_triangle(int x0, int y0, float w0, int x1, int y1, float w1, in
             {
                 vec3_t bary_weights = barycentric_weights(a, b, c, (vec2_t){x, y});
                 float interpolated_inverse_w = bary_weights.x / w0 + bary_weights.y / w1 + bary_weights.z / w2;
-                draw_pixel(x, y, interpolated_inverse_w, colour);
+                // only render if current depth of pixel is in front of previous value
+                if (interpolated_inverse_w > get_w_buffer_at(x, y))
+                {
+                    draw_pixel(x, y, colour);
+                    // update w_buffer with new inverse_w
+                    update_w_buffer_at(x, y, interpolated_inverse_w);
+                }
             }
         }
     }
@@ -96,7 +102,13 @@ void draw_filled_triangle(int x0, int y0, float w0, int x1, int y1, float w1, in
             {
                 vec3_t bary_weights = barycentric_weights(a, b, c, (vec2_t){x, y});
                 float interpolated_inverse_w = bary_weights.x / w0 + bary_weights.y / w1 + bary_weights.z / w2;
-                draw_pixel(x, y, interpolated_inverse_w, colour);
+                // only render if current depth of pixel is in front of previous value
+                if (interpolated_inverse_w > get_w_buffer_at(x, y))
+                {
+                    draw_pixel(x, y, colour);
+                    // update w_buffer with new inverse_w
+                    update_w_buffer_at(x, y, interpolated_inverse_w);
+                }
             }
         }
     }
@@ -131,7 +143,13 @@ void draw_texel(
     int tex_x = abs((int)(interpolated_u * (texture_width - 1))) % texture_width;
     int tex_y = abs((int)(interpolated_v * (texture_height - 1))) % texture_height;
 
-    draw_pixel(x, y, interpolated_inverse_w, texture[tex_y * texture_width + tex_x]);
+    // only render if current depth of pixel is in front of previous value
+    if (interpolated_inverse_w > get_w_buffer_at(x, y))
+    {
+        draw_pixel(x, y, texture[tex_y * texture_width + tex_x]);
+        // update w_buffer with new inverse_w
+        update_w_buffer_at(x, y, interpolated_inverse_w);
+    }
 };
 
 void draw_textured_triangle(

@@ -24,18 +24,17 @@ bool is_running = false;
 
 void setup(void)
 {
-    display_mode = DISPLAY_WIRE;
-    cull_method = CULL_BACKFACE;
+    set_display_mode(DISPLAY_WIRE);
+    set_cull_method(CULL_BACKFACE);
 
-    w_buffer = (float *)malloc(sizeof(float) * window_width * window_height);
-    assert(w_buffer);
-    colour_buffer = (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
-    assert(colour_buffer);
-    colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
-    assert(colour_buffer_texture);
+    init_light((vec3_t){0, 0, 1}); // direction
+    init_camera(
+        (vec3_t){0, 0, 0}, // position
+        (vec3_t){0, 0, 1}  // direction
+    );
 
-    float aspect_x = (float)window_width / (float)window_height;
-    float aspect_y = (float)window_height / (float)window_width;
+    float aspect_x = (float)get_window_width() / (float)get_window_height();
+    float aspect_y = (float)get_window_height() / (float)get_window_width();
     float fov_y = M_PI / 2.0;
     float fov_x = 2 * atan(tan(fov_y / 2.0) * aspect_x);
     float znear = 1.0;
@@ -45,80 +44,92 @@ void setup(void)
     init_frustum_planes(fov_x, fov_y, znear, zfar);
 
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/f117.obj");
-    load_png_texture_data("./assets/f117.png");
+    load_obj_file_data("./assets/efa.obj");
+    load_png_texture_data("./assets/efa.png");
 };
 
 void process_input(void)
 {
     SDL_Event event;
-    SDL_PollEvent(&event);
-
-    switch (event.type)
+    while (SDL_PollEvent(&event))
     {
-    case SDL_QUIT:
-        is_running = false;
-        break;
-    case SDL_KEYDOWN:
-        if (event.key.keysym.sym == SDLK_ESCAPE)
+        switch (event.type)
         {
+        case SDL_QUIT:
             is_running = false;
+            break;
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                is_running = false;
+            }
+            else if (event.key.keysym.sym == SDLK_1)
+            {
+                set_display_mode(DISPLAY_WIRE_VERTEX);
+            }
+            else if (event.key.keysym.sym == SDLK_2)
+            {
+                set_display_mode(DISPLAY_WIRE);
+            }
+            else if (event.key.keysym.sym == SDLK_3)
+            {
+                set_display_mode(DISPLAY_FILL);
+            }
+            else if (event.key.keysym.sym == SDLK_4)
+            {
+                set_display_mode(DISPLAY_FILL_WIRE);
+            }
+            else if (event.key.keysym.sym == SDLK_5)
+            {
+                set_display_mode(DISPLAY_TEXTURE);
+            }
+            else if (event.key.keysym.sym == SDLK_6)
+            {
+                set_display_mode(DISPLAY_TEXTURE_WIRE);
+            }
+            else if (event.key.keysym.sym == SDLK_c)
+            {
+                get_cull_method() == CULL_BACKFACE ? set_cull_method(CULL_NONE) : set_cull_method(CULL_BACKFACE);
+            }
+            else if (event.key.keysym.sym == SDLK_w)
+            {
+                set_camera_forward_velocity(vec3_mul(get_camera_direction(), 10.0 * delta_time));
+                set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+            }
+            else if (event.key.keysym.sym == SDLK_s)
+            {
+                set_camera_forward_velocity(vec3_mul(get_camera_direction(), 10.0 * delta_time));
+                set_camera_position(vec3_subtract(get_camera_position(), get_camera_forward_velocity()));
+            }
+            else if (event.key.keysym.sym == SDLK_a)
+            {
+                rotate_camera_yaw(-3.0 * delta_time);
+            }
+            else if (event.key.keysym.sym == SDLK_d)
+            {
+                rotate_camera_yaw(3.0 * delta_time);
+            }
+            else if (event.key.keysym.sym == SDLK_UP)
+            {
+                rotate_camera_pitch(-6.0 * delta_time);
+            }
+            else if (event.key.keysym.sym == SDLK_DOWN)
+            {
+                rotate_camera_pitch(6.0 * delta_time);
+            }
+            else if (event.key.keysym.sym == SDLK_p)
+            {
+                vec3_t camera_position = get_camera_position();
+                vec3_t camera_direction = get_camera_direction();
+                printf("camera position x: %f -- y: %f -- z: %f\n", camera_position.x, camera_position.y, camera_position.z);
+                printf("camera direction x: %f -- y: %f -- z: %f\n", camera_direction.x, camera_direction.y, camera_direction.z);
+                printf("pitch value: %f\n", get_camera_pitch());
+            }
+            else if (event.key.keysym.sym == SDLK_RIGHT)
+            {
+            }
+            break;
         }
-        else if (event.key.keysym.sym == SDLK_1)
-        {
-            display_mode = DISPLAY_WIRE_VERTEX;
-        }
-        else if (event.key.keysym.sym == SDLK_2)
-        {
-            display_mode = DISPLAY_WIRE;
-        }
-        else if (event.key.keysym.sym == SDLK_3)
-        {
-            display_mode = DISPLAY_FILL;
-        }
-        else if (event.key.keysym.sym == SDLK_4)
-        {
-            display_mode = DISPLAY_FILL_WIRE;
-        }
-        else if (event.key.keysym.sym == SDLK_5)
-        {
-            display_mode = DISPLAY_TEXTURE;
-        }
-        else if (event.key.keysym.sym == SDLK_6)
-        {
-            display_mode = DISPLAY_TEXTURE_WIRE;
-        }
-        else if (event.key.keysym.sym == SDLK_c)
-        {
-            cull_method == CULL_BACKFACE ? (cull_method = CULL_NONE) : (cull_method = CULL_BACKFACE);
-        }
-        else if (event.key.keysym.sym == SDLK_w)
-        {
-            camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-            camera.position = vec3_add(camera.position, camera.forward_velocity);
-        }
-        else if (event.key.keysym.sym == SDLK_s)
-        {
-            camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-            camera.position = vec3_subtract(camera.position, camera.forward_velocity);
-        }
-        else if (event.key.keysym.sym == SDLK_a)
-        {
-            camera.position.x -= 6.0 * delta_time;
-        }
-        else if (event.key.keysym.sym == SDLK_d)
-        {
-            camera.position.x += 6.0 * delta_time;
-        }
-        else if (event.key.keysym.sym == SDLK_UP)
-        {
-            mesh.translation.y += 3.0 * delta_time;
-        }
-        else if (event.key.keysym.sym == SDLK_DOWN)
-        {
-            mesh.translation.y -= 3.0 * delta_time;
-        }
-        break;
     }
 };
 
@@ -156,13 +167,10 @@ void update(void)
     // camera.position.y += 0.3 * delta_time;
     // camera.position.z = 5.0;
 
-    // combined camera transformations
+    // create view matrix based off camera look at target
     vec3_t up_direction = {0, 1, 0};
-    vec3_t target_pos = {0, 0, 1.0};
-    mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw_angle);
-    camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target_pos)));
-    target_pos = vec3_add(camera.position, camera.direction);
-    view_matrix = look_at(target_pos, camera.position, up_direction);
+    vec3_t target = get_camera_lookat_target();
+    view_matrix = mat4_make_view(target, get_camera_position(), up_direction);
 
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
     mat4_t rotx_matrix = mat4_make_rotation_x(mesh.rotation.x);
@@ -200,7 +208,7 @@ void update(void)
             transformed_vertices[j] = transformed_vertex;
         }
 
-        if (cull_method == CULL_NONE || !cull_face(transformed_vertices))
+        if (!is_cull_backface() || !cull_face(transformed_vertices))
         {
             // perform clipping
             polygon_t poly = create_poly_from_triangle(
@@ -225,16 +233,16 @@ void update(void)
                     // project to screen space
                     vec4_t projected = mat4_mul_vec4_project(projection_matrix, triangle_to_render.points[j]);
                     // translate to center & scale
-                    projected.x *= window_width / 2.0;
-                    projected.y *= window_height / 2.0;
-                    projected.x += window_width / 2.0;
-                    projected.y += window_height / 2.0;
+                    projected.x *= get_window_width() / 2.0;
+                    projected.y *= get_window_height() / 2.0;
+                    projected.x += get_window_width() / 2.0;
+                    projected.y += get_window_height() / 2.0;
                     triangle_to_render.points[j] = (vec4_t){projected.x, projected.y, projected.z, projected.w};
                 }
 
                 triangle_to_render.colour = 0xFFFFFFF;
 
-                float shading_factor = calc_shading_factor(transformed_vertices, light_source.direction);
+                float shading_factor = calc_shading_factor(transformed_vertices, get_light_direction());
                 triangle_to_render.colour = light_apply_intensity(mesh_face.colour, shading_factor);
 
                 array_push(triangles_to_render, triangle_to_render)
@@ -249,7 +257,7 @@ void draw_triangles(void)
     {
         triangle_t triangle = triangles_to_render[i];
 
-        if (display_mode == DISPLAY_FILL_WIRE || display_mode == DISPLAY_FILL)
+        if (should_render_filled_triangle())
         {
             draw_filled_triangle(
                 triangle.points[0].x, triangle.points[0].y, triangle.points[0].w,
@@ -257,7 +265,7 @@ void draw_triangles(void)
                 triangle.points[2].x, triangle.points[2].y, triangle.points[2].w,
                 triangle.colour);
         }
-        if (display_mode == DISPLAY_TEXTURE || display_mode == DISPLAY_TEXTURE_WIRE)
+        if (should_render_texture())
         {
             // draw texture triangle
             draw_textured_triangle(
@@ -266,11 +274,11 @@ void draw_triangles(void)
                 triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.tex_coords[2].u, triangle.tex_coords[2].v,
                 mesh_texture);
         }
-        if (display_mode == DISPLAY_WIRE || display_mode == DISPLAY_WIRE_VERTEX || display_mode == DISPLAY_FILL_WIRE || display_mode == DISPLAY_TEXTURE_WIRE)
+        if (should_render_wireframe())
         {
             draw_triangle(triangle, 0xFFFFFFFF);
         }
-        if (display_mode == DISPLAY_WIRE_VERTEX)
+        if (should_render_vertices())
         {
             draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFF0000FF);
             draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFF0000FF);
@@ -283,11 +291,11 @@ void render(void)
 {
     clear_colour_buffer(0xFF000000);
     clear_w_buffer();
+
     draw_grid(0xFF3C3C3C, 20);
     draw_triangles();
-    render_colour_buffer();
 
-    SDL_RenderPresent(renderer);
+    render_colour_buffer();
 };
 
 void free_resources(void)
@@ -295,8 +303,6 @@ void free_resources(void)
     array_free(mesh.faces);
     array_free(mesh.vertices);
     array_free(triangles_to_render);
-    free(colour_buffer);
-    free(w_buffer);
     upng_free(png_texture);
 };
 

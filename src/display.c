@@ -1,15 +1,73 @@
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 #include "display.h"
 #include "texture.h"
 
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
-SDL_Texture *colour_buffer_texture = NULL;
-uint32_t *colour_buffer = NULL;
-float *w_buffer = NULL;
-int window_width = 800;
-int window_height = 600;
+static DisplayMode_t display_mode = DISPLAY_WIRE;
+static CullMethod_t cull_method = CULL_BACKFACE;
+static SDL_Window *window = NULL;
+static SDL_Renderer *renderer = NULL;
+static SDL_Texture *colour_buffer_texture = NULL;
+static uint32_t *colour_buffer = NULL;
+static float *w_buffer = NULL;
+static int window_width = 640;  // simulates lower resolution display
+static int window_height = 360; // simulates lower resolution display
+
+int get_window_height(void)
+{
+    return window_height;
+};
+int get_window_width(void)
+{
+    return window_width;
+};
+
+DisplayMode_t get_display_mode(void)
+{
+    return display_mode;
+};
+void set_display_mode(DisplayMode_t mode)
+{
+    display_mode = mode;
+};
+bool should_render_filled_triangle(void)
+{
+    return (
+        display_mode == DISPLAY_FILL_WIRE ||
+        display_mode == DISPLAY_FILL);
+};
+bool should_render_texture(void)
+{
+    return (
+        display_mode == DISPLAY_TEXTURE ||
+        display_mode == DISPLAY_TEXTURE_WIRE);
+};
+bool should_render_wireframe(void)
+{
+    return (
+        display_mode == DISPLAY_WIRE ||
+        display_mode == DISPLAY_WIRE_VERTEX ||
+        display_mode == DISPLAY_FILL_WIRE ||
+        display_mode == DISPLAY_TEXTURE_WIRE);
+};
+bool should_render_vertices(void)
+{
+    return display_mode == DISPLAY_WIRE_VERTEX;
+};
+
+CullMethod_t get_cull_method(void)
+{
+    return cull_method;
+};
+void set_cull_method(CullMethod_t method)
+{
+    cull_method = method;
+};
+bool is_cull_backface(void)
+{
+    return cull_method == CULL_BACKFACE;
+};
 
 bool initialize_window(void)
 {
@@ -19,13 +77,16 @@ bool initialize_window(void)
         return false;
     };
 
-    SDL_DisplayMode display_mode;
-    SDL_GetCurrentDisplayMode(0, &display_mode);
-    window_width = display_mode.w;
-    window_height = display_mode.h;
+    SDL_DisplayMode sdl_display_mode;
+    SDL_GetCurrentDisplayMode(0, &sdl_display_mode);
+    int fullscreen_window_width = sdl_display_mode.w;
+    int fullscreen_window_height = sdl_display_mode.h;
+
+    window_height = fullscreen_window_height;
+    window_width = fullscreen_window_width;
 
     // Create SDL window
-    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, fullscreen_window_width, fullscreen_window_height, SDL_WINDOW_BORDERLESS);
     if (!window)
     {
         fprintf(stderr, "Error creating SDL window\n");
@@ -40,11 +101,20 @@ bool initialize_window(void)
         return false;
     };
 
+    colour_buffer = (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
+    assert(colour_buffer);
+    colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
+    assert(colour_buffer_texture);
+    w_buffer = (float *)malloc(sizeof(float) * window_width * window_height);
+    assert(w_buffer);
+
     return true;
 };
 
 void destroy_window(void)
 {
+    free(colour_buffer);
+    free(w_buffer);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -53,9 +123,9 @@ void destroy_window(void)
 void render_colour_buffer(void)
 {
     SDL_UpdateTexture(colour_buffer_texture, NULL, colour_buffer, (int)(window_width * sizeof(uint32_t)));
-    SDL_RenderCopy(renderer, colour_buffer_texture, NULL, NULL);
+    SDL_RenderCopy(renderer, colour_buffer_texture, NULL, NULL); // automatically handles buffer stretching/shrinking to match display resolution
+    SDL_RenderPresent(renderer);
 };
-
 void clear_colour_buffer(uint32_t colour)
 {
     for (int i = 0; i < window_width * window_height; i++)
@@ -64,6 +134,22 @@ void clear_colour_buffer(uint32_t colour)
     };
 };
 
+float get_w_buffer_at(int x, int y)
+{
+    if (x < 0 || x >= window_width || y < 0 || y >= window_height)
+    {
+        return 0.0;
+    }
+    return w_buffer[(y * window_width) + x];
+};
+void update_w_buffer_at(int x, int y, float val)
+{
+    if (x < 0 || x >= window_width || y < 0 || y >= window_height)
+    {
+        return;
+    }
+    w_buffer[(y * window_width) + x] = val;
+};
 void clear_w_buffer(void)
 {
     for (int i = 0; i < window_width * window_height; i++)
@@ -86,18 +172,13 @@ void draw_grid(uint32_t line_colour, int grid_spacing)
     };
 };
 
-void draw_pixel(int x, int y, float inverse_w, uint32_t colour)
+void draw_pixel(int x, int y, uint32_t colour)
 {
-    // only render if current depth of pixel is in front of previous value
-    if (inverse_w > w_buffer[(y * window_width) + x])
+    if (x < 0 || x >= window_width || y < 0 || y >= window_height)
     {
-        if (x >= 0 && x < window_width && y >= 0 && y < window_height)
-        {
-            colour_buffer[(y * window_width) + x] = colour;
-            // update w_buffer
-            w_buffer[(y * window_width) + x] = inverse_w;
-        };
+        return;
     }
+    colour_buffer[(y * window_width) + x] = colour;
 };
 
 void draw_rect(int x, int y, int width, int height, uint32_t colour)
@@ -106,7 +187,7 @@ void draw_rect(int x, int y, int width, int height, uint32_t colour)
     {
         for (int bx = x; bx < x + width; bx++)
         {
-            draw_pixel(bx, by, 1.0, colour); // always draw rectangles for now
+            draw_pixel(bx, by, colour);
         };
     };
 };
@@ -126,7 +207,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t colour)
 
     for (int i = 0; i <= side_length; i++)
     {
-        draw_pixel(round(current_x), round(current_y), 1.0, colour);
+        draw_pixel(round(current_x), round(current_y), colour);
         current_x += x_inc;
         current_y += y_inc;
     };

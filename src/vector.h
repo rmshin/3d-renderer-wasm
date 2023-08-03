@@ -2,6 +2,7 @@
 #define VECTOR_H
 
 #include <stdbool.h>
+#define EPSILON 0.01f
 
 typedef struct
 {
@@ -47,6 +48,7 @@ vec3_t vec3_div(vec3_t v, float factor);
 vec3_t vec3_cross(vec3_t v1, vec3_t v2);
 float vec3_dot(vec3_t v1, vec3_t v2);
 void vec3_normalise(vec3_t *v);
+bool vec3_is_near_parallel(vec3_t v1, vec3_t v2);
 
 vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);

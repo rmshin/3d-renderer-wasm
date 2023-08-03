@@ -105,6 +105,10 @@ void vec3_normalise(vec3_t *v)
     v->y /= vl;
     v->z /= vl;
 };
+bool vec3_is_near_parallel(vec3_t v1, vec3_t v2)
+{
+    return (vec3_dot(v1, v2) / (vec3_length(v1) * vec3_length(v2))) > (float)(1 - EPSILON);
+};
 
 // rotation functions
 vec3_t vec3_rotate_x(vec3_t v, float angle)
