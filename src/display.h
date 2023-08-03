@@ -5,9 +5,6 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
-#define FPS 30
-#define TARGET_FRAME_TIME (1000 / FPS)
-
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 extern SDL_Texture *colour_buffer_texture;

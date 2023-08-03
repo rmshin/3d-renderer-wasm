@@ -58,6 +58,10 @@ float vec3_length(vec3_t v)
 {
     return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 };
+vec3_t vec3_clone(vec3_t *v)
+{
+    return (vec3_t){v->x, v->y, v->z};
+};
 vec3_t vec3_add(vec3_t v1, vec3_t v2)
 {
     return (vec3_t){
@@ -125,7 +129,7 @@ vec3_t vec3_rotate_z(vec3_t v, float angle)
     return (vec3_t){rotatedX, rotatedY, v.z};
 };
 
-bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos)
+bool cull_face(vec4_t face_vertices[3])
 {
     vec3_t fv0, fv1, fv2;
     fv0 = vec3_from_vec4(face_vertices[0]);
@@ -134,10 +138,11 @@ bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos)
     // get cross product of vectors
     vec3_t cross = vec3_cross(vec3_subtract(fv1, fv0), vec3_subtract(fv2, fv0));
     vec3_normalise(&cross);
-    // get camera pos vector
-    vec3_t camera = vec3_subtract(camera_pos, fv0);
+    // get view vector
+    vec3_t origin = {0, 0, 0};
+    vec3_t view_ray = vec3_subtract(origin, fv0);
     // dot product between cam pos vector & cross product vector
-    float dot = vec3_dot(camera, cross);
+    float dot = vec3_dot(view_ray, cross);
     // return true if dot < 0, otherwise false
     return dot < 0;
 };

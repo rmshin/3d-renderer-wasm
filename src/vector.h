@@ -39,6 +39,7 @@ void vec2_normalise(vec2_t *v);
 
 // 3d vector functions
 float vec3_length(vec3_t v);
+vec3_t vec3_clone(vec3_t *v);
 vec3_t vec3_add(vec3_t v1, vec3_t v2);
 vec3_t vec3_subtract(vec3_t v1, vec3_t v2);
 vec3_t vec3_mul(vec3_t v, float factor);
@@ -51,7 +52,7 @@ vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);
 vec3_t vec3_rotate_z(vec3_t v, float angle);
 
-bool cull_face(vec4_t face_vertices[3], vec3_t camera_pos);
+bool cull_face(vec4_t face_vertices[3]);
 
 // 4d vector functions
 float vec4_dot(vec4_t v1, vec4_t v2);

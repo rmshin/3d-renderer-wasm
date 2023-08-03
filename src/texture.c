@@ -23,6 +23,11 @@ void load_png_texture_data(char *pathname)
     }
 };
 
+tex2_t tex2_clone(tex2_t *t)
+{
+    return (tex2_t){t->u, t->v};
+};
+
 const uint8_t REDBRICK_TEXTURE[] = {
     0x38,
     0x38,
