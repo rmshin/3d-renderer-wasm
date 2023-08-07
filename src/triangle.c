@@ -2,6 +2,7 @@
 #include "util.h"
 #include "triangle.h"
 #include "display.h"
+#include "lighting.h"
 
 void draw_triangle(triangle_t triangle, uint32_t colour)
 {
@@ -117,7 +118,7 @@ void draw_filled_triangle(int x0, int y0, float w0, int x1, int y1, float w1, in
 void draw_texel(
     int x, int y, upng_t *texture,
     vec4_t point_a, vec4_t point_b, vec4_t point_c,
-    tex2_t a_uv, tex2_t b_uv, tex2_t c_uv)
+    tex2_t a_uv, tex2_t b_uv, tex2_t c_uv, float shading_factor)
 {
     vec2_t p = {x, y};
     vec2_t a = vec2_from_vec4(point_a);
@@ -150,7 +151,8 @@ void draw_texel(
     if (interpolated_inverse_w > get_w_buffer_at(x, y))
     {
         uint32_t *texture_buffer = (uint32_t *)upng_get_buffer(texture);
-        draw_pixel(x, y, texture_buffer[tex_y * texture_width + tex_x]);
+        uint32_t tex_colour = texture_buffer[tex_y * texture_width + tex_x];
+        draw_pixel(x, y, light_apply_intensity(tex_colour, shading_factor));
         // update w_buffer with new inverse_w
         update_w_buffer_at(x, y, interpolated_inverse_w);
     }
@@ -160,7 +162,7 @@ void draw_textured_triangle(
     int x0, int y0, float z0, float w0, float u0, float v0,
     int x1, int y1, float z1, float w1, float u1, float v1,
     int x2, int y2, float z2, float w2, float u2, float v2,
-    upng_t *texture)
+    upng_t *texture, float shading_factor)
 {
     // need to sort vertices by ascending y (y0 -> y1 -> y2)
     if (y0 > y1)
@@ -225,7 +227,7 @@ void draw_textured_triangle(
 
             for (int x = round(x_start); x < round(x_end); x++)
             {
-                draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+                draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv, shading_factor);
             }
         }
     }
@@ -251,7 +253,7 @@ void draw_textured_triangle(
 
             for (int x = round(x_start); x < round(x_end); x++)
             {
-                draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+                draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv, shading_factor);
             }
         }
     }

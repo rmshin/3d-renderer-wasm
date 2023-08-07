@@ -7,12 +7,11 @@
 
 typedef enum
 {
+    DISPLAY_VERTEX,
     DISPLAY_WIRE,
-    DISPLAY_WIRE_VERTEX,
     DISPLAY_FILL,
     DISPLAY_FILL_WIRE,
     DISPLAY_TEXTURE,
-    DISPLAY_TEXTURE_WIRE,
 } DisplayMode_t;
 
 typedef enum
@@ -20,6 +19,12 @@ typedef enum
     CULL_NONE,
     CULL_BACKFACE,
 } CullMethod_t;
+
+typedef enum
+{
+    ROTATE_NONE,
+    ROTATE_AUTO,
+} RotationMode_t;
 
 // window
 bool initialize_window(void);
@@ -39,6 +44,10 @@ bool should_render_vertices(void);
 CullMethod_t get_cull_method(void);
 void set_cull_method(CullMethod_t method);
 bool is_cull_backface(void);
+
+// rotate mode
+RotationMode_t get_rotation_mode(void);
+void set_rotation_mode(RotationMode_t mode);
 
 // colour buffer
 void render_colour_buffer(void);

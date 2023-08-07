@@ -24,11 +24,13 @@ mat4_t view_matrix;
 float delta_time;
 uint32_t prev_frame_time;
 bool is_running;
+bool left_mouse_down;
 
 void setup(void)
 {
     set_display_mode(DISPLAY_WIRE);
     set_cull_method(CULL_BACKFACE);
+    set_rotation_mode(ROTATE_NONE);
 
     init_light((vec3_t){0, 0, 1}); // direction
     init_camera(
@@ -55,6 +57,36 @@ void setup(void)
 void process_input(void)
 {
     SDL_Event event;
+
+    // for smoother camera movement
+    uint8_t *keystate = SDL_GetKeyboardState(NULL);
+    if (keystate[SDL_SCANCODE_W])
+    {
+        set_camera_forward_velocity(vec3_mul(get_camera_direction(), 5.0 * delta_time));
+        set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+    }
+    else if (keystate[SDL_SCANCODE_S])
+    {
+        set_camera_forward_velocity(vec3_mul(get_camera_direction(), 5.0 * delta_time));
+        set_camera_position(vec3_subtract(get_camera_position(), get_camera_forward_velocity()));
+    }
+    else if (keystate[SDL_SCANCODE_A])
+    {
+        vec3_t up = {0, 1, 0};
+        vec3_t left = vec3_cross(get_camera_direction(), up);
+        vec3_normalise(&left);
+        set_camera_forward_velocity(vec3_mul(left, 5.0 * delta_time));
+        set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+    }
+    else if (keystate[SDL_SCANCODE_D])
+    {
+        vec3_t down = {0, -1, 0};
+        vec3_t right = vec3_cross(get_camera_direction(), down);
+        vec3_normalise(&right);
+        set_camera_forward_velocity(vec3_mul(right, 5.0 * delta_time));
+        set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+    }
+
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
@@ -63,13 +95,9 @@ void process_input(void)
             is_running = false;
             break;
         case SDL_KEYDOWN:
-            if (event.key.keysym.sym == SDLK_ESCAPE)
+            if (event.key.keysym.sym == SDLK_1)
             {
-                is_running = false;
-            }
-            else if (event.key.keysym.sym == SDLK_1)
-            {
-                set_display_mode(DISPLAY_WIRE_VERTEX);
+                set_display_mode(DISPLAY_VERTEX);
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
@@ -77,57 +105,42 @@ void process_input(void)
             }
             else if (event.key.keysym.sym == SDLK_3)
             {
-                set_display_mode(DISPLAY_FILL);
+                set_display_mode(DISPLAY_FILL_WIRE);
             }
             else if (event.key.keysym.sym == SDLK_4)
             {
-                set_display_mode(DISPLAY_FILL_WIRE);
+                set_display_mode(DISPLAY_FILL);
             }
             else if (event.key.keysym.sym == SDLK_5)
             {
                 set_display_mode(DISPLAY_TEXTURE);
             }
-            else if (event.key.keysym.sym == SDLK_6)
-            {
-                set_display_mode(DISPLAY_TEXTURE_WIRE);
-            }
             else if (event.key.keysym.sym == SDLK_c)
             {
                 get_cull_method() == CULL_BACKFACE ? set_cull_method(CULL_NONE) : set_cull_method(CULL_BACKFACE);
             }
-            else if (event.key.keysym.sym == SDLK_w)
+            else if (event.key.keysym.sym == SDLK_r)
             {
-                set_camera_forward_velocity(vec3_mul(get_camera_direction(), 10.0 * delta_time));
-                set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+                get_rotation_mode() == ROTATE_NONE ? set_rotation_mode(ROTATE_AUTO) : set_rotation_mode(ROTATE_NONE);
             }
-            else if (event.key.keysym.sym == SDLK_s)
+            break;
+        case SDL_MOUSEMOTION:
+            if (left_mouse_down)
             {
-                set_camera_forward_velocity(vec3_mul(get_camera_direction(), 10.0 * delta_time));
-                set_camera_position(vec3_subtract(get_camera_position(), get_camera_forward_velocity()));
+                rotate_camera_yaw(event.motion.xrel * delta_time * MOUSE_SENSITIVITY);
+                rotate_camera_pitch(-event.motion.yrel * delta_time * MOUSE_SENSITIVITY);
             }
-            else if (event.key.keysym.sym == SDLK_a)
+            break;
+        case SDL_MOUSEBUTTONUP:
+            if (left_mouse_down && event.button.button == SDL_BUTTON_LEFT)
             {
-                rotate_camera_yaw(-3.0 * delta_time);
+                left_mouse_down = false;
             }
-            else if (event.key.keysym.sym == SDLK_d)
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            if (!left_mouse_down && event.button.button == SDL_BUTTON_LEFT)
             {
-                rotate_camera_yaw(3.0 * delta_time);
-            }
-            else if (event.key.keysym.sym == SDLK_UP)
-            {
-                rotate_camera_pitch(-6.0 * delta_time);
-            }
-            else if (event.key.keysym.sym == SDLK_DOWN)
-            {
-                rotate_camera_pitch(6.0 * delta_time);
-            }
-            else if (event.key.keysym.sym == SDLK_p)
-            {
-                vec3_t camera_position = get_camera_position();
-                vec3_t camera_direction = get_camera_direction();
-            }
-            else if (event.key.keysym.sym == SDLK_RIGHT)
-            {
+                left_mouse_down = true;
             }
             break;
         }
@@ -136,6 +149,13 @@ void process_input(void)
 
 void process_graphics_pipeline_stages(mesh_t *mesh)
 {
+    // apply auto rotation if enabled
+    if (get_rotation_mode() == ROTATE_AUTO)
+    {
+        mesh->rotation.x += 0.5 * delta_time;
+        mesh->rotation.y += 0.5 * delta_time;
+    }
+
     // create view matrix based off camera look at target
     vec3_t up_direction = {0, 1, 0};
     vec3_t target = get_camera_lookat_target();
@@ -209,10 +229,9 @@ void process_graphics_pipeline_stages(mesh_t *mesh)
                     triangle_to_render.points[j] = (vec4_t){projected.x, projected.y, projected.z, projected.w};
                 }
 
-                triangle_to_render.colour = 0xFFFFFFF;
-
                 float shading_factor = calc_shading_factor(transformed_vertices, get_light_direction());
                 triangle_to_render.colour = light_apply_intensity(mesh_face.colour, shading_factor);
+                triangle_to_render.shading_factor = shading_factor;
                 triangle_to_render.texture = mesh->texture;
 
                 array_push(triangles_to_render, triangle_to_render)
@@ -233,21 +252,6 @@ void update(void)
     for (int m = 0; m < mesh_count; m++)
     {
         mesh_t *mesh = get_mesh(m);
-
-        // mesh->rotation.x += 0.6 * delta_time;
-        // mesh->rotation.y += 0.6 * delta_time;
-        // mesh->rotation.z += 0.6 * delta_time;
-        // mesh->scale.z += 0.002;
-        // mesh->translation.z = 5.0;
-
-        // more interesting transformations
-        // uint32_t t = SDL_GetTicks() * 0.0005;
-        // mesh->rotation.x += 0.02;
-        // mesh->scale.x = sin(t) + 1;
-        // mesh->scale.y = sin(t) + 1;
-        // mesh->scale.z = sin(t) + 1;
-        // mesh->translation.x = tan(t) * 2;
-        // mesh->translation.y = sin(t) * 2.2;
 
         process_graphics_pipeline_stages(mesh);
     }
@@ -273,11 +277,11 @@ void draw_triangles(void)
                 triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.tex_coords[0].u, triangle.tex_coords[0].v,
                 triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.tex_coords[1].u, triangle.tex_coords[1].v,
                 triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.tex_coords[2].u, triangle.tex_coords[2].v,
-                triangle.texture);
+                triangle.texture, triangle.shading_factor);
         }
         if (should_render_wireframe())
         {
-            draw_triangle(triangle, 0xFFFFFFFF);
+            draw_triangle(triangle, 0xFFC3C3C3);
         }
         if (should_render_vertices())
         {
@@ -326,6 +330,7 @@ int main(void)
 {
     prev_frame_time = 0;
     is_running = false;
+    left_mouse_down = false;
     // create an SDL window
     is_running = initialize_window();
 

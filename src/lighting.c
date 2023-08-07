@@ -18,9 +18,9 @@ uint32_t light_apply_intensity(uint32_t colour, float percentage_factor)
     {
         percentage_factor = 1;
     }
-    else if (percentage_factor < 0)
+    else if (percentage_factor < 0.15)
     {
-        percentage_factor = 0;
+        percentage_factor = 0.15;
     };
 
     uint32_t a = (colour & 0xFF000000);

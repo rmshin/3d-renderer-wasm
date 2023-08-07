@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "vector.h"
+#include <math.h>
 
 camera_t camera;
 
@@ -68,4 +69,14 @@ void rotate_camera_yaw(float y)
 void rotate_camera_pitch(float p)
 {
     camera.pitch += p;
+
+    // Clamp camera pitch between values close to -90º and 90º (-PI/2 and PI/2) to avoid axis flipping
+    if (camera.pitch < (-M_PI / 2 + 0.05))
+    {
+        camera.pitch = -M_PI / 2 + 0.05;
+    }
+    else if (camera.pitch > (M_PI / 2 - 0.05))
+    {
+        camera.pitch = M_PI / 2 - 0.05;
+    }
 };

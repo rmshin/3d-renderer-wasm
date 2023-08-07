@@ -6,6 +6,7 @@
 
 static DisplayMode_t display_mode = DISPLAY_WIRE;
 static CullMethod_t cull_method = CULL_BACKFACE;
+static RotationMode_t rotation_mode = ROTATE_NONE;
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *colour_buffer_texture = NULL;
@@ -39,21 +40,17 @@ bool should_render_filled_triangle(void)
 };
 bool should_render_texture(void)
 {
-    return (
-        display_mode == DISPLAY_TEXTURE ||
-        display_mode == DISPLAY_TEXTURE_WIRE);
+    return (display_mode == DISPLAY_TEXTURE);
 };
 bool should_render_wireframe(void)
 {
     return (
         display_mode == DISPLAY_WIRE ||
-        display_mode == DISPLAY_WIRE_VERTEX ||
-        display_mode == DISPLAY_FILL_WIRE ||
-        display_mode == DISPLAY_TEXTURE_WIRE);
+        display_mode == DISPLAY_FILL_WIRE);
 };
 bool should_render_vertices(void)
 {
-    return display_mode == DISPLAY_WIRE_VERTEX;
+    return (display_mode == DISPLAY_VERTEX);
 };
 
 CullMethod_t get_cull_method(void)
@@ -69,8 +66,19 @@ bool is_cull_backface(void)
     return cull_method == CULL_BACKFACE;
 };
 
+RotationMode_t get_rotation_mode(void)
+{
+    return rotation_mode;
+};
+void set_rotation_mode(RotationMode_t mode)
+{
+    rotation_mode = mode;
+};
+
 bool initialize_window(void)
 {
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+    SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "1");
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         fprintf(stderr, "Error initializing\n");

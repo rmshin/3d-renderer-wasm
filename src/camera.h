@@ -4,6 +4,8 @@
 #include "vector.h"
 #include "matrix.h"
 
+#define MOUSE_SENSITIVITY 0.1f
+
 typedef struct
 {
     vec3_t position;
