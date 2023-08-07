@@ -28,7 +28,7 @@ uint32_t light_apply_intensity(uint32_t colour, float percentage_factor)
     uint32_t g = (colour & 0x0000FF00) * percentage_factor;
     uint32_t b = (colour & 0x000000FF) * percentage_factor;
 
-    u_int32_t new_colour = a | (r & 0x00FF0000) | (g & 0x0000FF00) | (b & 0x000000FF);
+    uint32_t new_colour = a | (r & 0x00FF0000) | (g & 0x0000FF00) | (b & 0x000000FF);
     return new_colour;
 };
 

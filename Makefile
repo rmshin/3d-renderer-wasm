@@ -6,3 +6,6 @@ build:
 
 clean:
 	rm renderer
+
+wasm:
+	emcc ./src/*.c -o index.html -g -lm --bind -s USE_SDL=2 --preload-file assets/ --use-preload-plugins -sALLOW_MEMORY_GROWTH

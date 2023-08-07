@@ -11,6 +11,9 @@
 #include "texture.h"
 #include "camera.h"
 #include "clipping.h"
+#ifdef __EMSCRIPTEN__
+#include "emscripten.h"
+#endif
 
 triangle_t *triangles_to_render = NULL;
 
@@ -19,8 +22,8 @@ mat4_t world_matrix;
 mat4_t view_matrix;
 
 float delta_time;
-uint32_t prev_frame_time = 0;
-bool is_running = false;
+uint32_t prev_frame_time;
+bool is_running;
 
 void setup(void)
 {
@@ -44,8 +47,9 @@ void setup(void)
     init_frustum_planes(fov_x, fov_y, znear, zfar);
 
     load_mesh("./assets/efa.obj", "./assets/efa.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){-3, 0, 3});
-    load_mesh("./assets/crab.obj", "./assets/crab.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){3, 0, 7});
-    load_mesh("./assets/drone.obj", "./assets/drone.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){0, -5, 5});
+    load_mesh("./assets/f22.obj", "./assets/f22.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){3, 0, 7});
+    // load_mesh("./assets/f117.obj", "./assets/f117.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){0, -5, 5});
+    load_mesh("./assets/cube.obj", "./assets/cube.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){0, -5, 5});
 };
 
 void process_input(void)
@@ -121,9 +125,6 @@ void process_input(void)
             {
                 vec3_t camera_position = get_camera_position();
                 vec3_t camera_direction = get_camera_direction();
-                printf("camera position x: %f -- y: %f -- z: %f\n", camera_position.x, camera_position.y, camera_position.z);
-                printf("camera direction x: %f -- y: %f -- z: %f\n", camera_direction.x, camera_direction.y, camera_direction.z);
-                printf("pitch value: %f\n", get_camera_pitch());
             }
             else if (event.key.keysym.sym == SDLK_RIGHT)
             {
@@ -233,12 +234,14 @@ void update(void)
     {
         mesh_t *mesh = get_mesh(m);
 
+        // mesh->rotation.x += 0.6 * delta_time;
         // mesh->rotation.y += 0.6 * delta_time;
+        // mesh->rotation.z += 0.6 * delta_time;
         // mesh->scale.z += 0.002;
         // mesh->translation.z = 5.0;
 
         // more interesting transformations
-        // t = SDL_GetTicks() * 0.0005;
+        // uint32_t t = SDL_GetTicks() * 0.0005;
         // mesh->rotation.x += 0.02;
         // mesh->scale.x = sin(t) + 1;
         // mesh->scale.y = sin(t) + 1;
@@ -302,21 +305,38 @@ void free_resources(void)
     free_mesh_resources();
 };
 
+void mainLoop(void)
+{
+    process_input();
+    update();
+    render();
+
+    if (!is_running)
+    {
+#ifdef __EMSCRIPTEN__
+        emscripten_cancel_main_loop();
+#endif
+
+        destroy_window();
+        free_resources();
+    }
+};
+
 int main(void)
 {
+    prev_frame_time = 0;
+    is_running = false;
     // create an SDL window
     is_running = initialize_window();
 
     setup();
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(mainLoop, -1, 1);
+#endif
+#ifndef __EMSCRIPTEN__
     while (is_running)
-    {
-        process_input();
-        update();
-        render();
-    }
-
-    destroy_window();
-    free_resources();
+        mainLoop();
+#endif
 
     return 0;
 };
