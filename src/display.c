@@ -3,6 +3,9 @@
 #include <assert.h>
 #include "display.h"
 #include "texture.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten/html5.h>
+#endif
 
 static DisplayMode_t display_mode = DISPLAY_WIRE;
 static CullMethod_t cull_method = CULL_BACKFACE;
@@ -90,11 +93,27 @@ bool initialize_window(void)
     int fullscreen_window_width = sdl_display_mode.w;
     int fullscreen_window_height = sdl_display_mode.h;
 
-    window_height = fullscreen_window_height;
     window_width = fullscreen_window_width;
+    window_height = fullscreen_window_height;
+
+#ifdef __EMSCRIPTEN__
+    double pixel_ratio = emscripten_get_device_pixel_ratio();
+    window_width = window_width * pixel_ratio;
+    window_height = window_height * pixel_ratio;
+
+    // scale to proper resolution for high dpi displays
+    EmscriptenFullscreenStrategy strategy;
+    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF;
+    strategy.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF;
+    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
+    strategy.canvasResizedCallbackUserData = NULL;
+    emscripten_enter_soft_fullscreen("canvas", &strategy);
+    emscripten_set_element_css_size("canvas", (double)window_width, (double)window_height);
+
+#endif
 
     // Create SDL window
-    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, fullscreen_window_width, fullscreen_window_height, SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_BORDERLESS);
     if (!window)
     {
         fprintf(stderr, "Error creating SDL window\n");

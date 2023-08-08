@@ -8,4 +8,4 @@ clean:
 	rm renderer
 
 wasm:
-	emcc ./src/*.c -o index.js -g -lm --bind -s USE_SDL=2 --preload-file assets/ --use-preload-plugins -sALLOW_MEMORY_GROWTH
+	emcc ./src/*.c -o renderer.js -g -lm --bind -s USE_SDL=2 --preload-file assets/ --use-preload-plugins -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web -sMAX_WEBGL_VERSION=2

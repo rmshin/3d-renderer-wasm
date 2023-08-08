@@ -13,13 +13,14 @@
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
       canvas {
         border: 0px none;
+        padding: none;
       }
     </style>
   </head>
   <body>
     <div id="controls"></div>
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
-    <script type="text/javascript">
+    <script onload type="text/javascript">
       var Module = {
         preRun: [],
         postRun: [],
@@ -42,33 +43,7 @@
         })(),
         totalDependencies: 0,
       };
-
-      // Determine the display resolution
-      const devicePixelRatio = window.devicePixelRatio || 1;
-
-      // Set the desired canvas width and height
-      const canvasWidth = window.screen.width;
-      const canvasHeight = window.screen.height;
-
-      // Initialize SDL2 Module
-      Module['onRuntimeInitialized'] = () => {
-        const canvas = Module['canvas']; // Get the canvas element created by SDL2
-        const ctx = canvas.getContext('2d');
-
-        // Scale the canvas resolution based on the devicePixelRatio
-        const scaledWidth = canvasWidth * devicePixelRatio;
-        const scaledHeight = canvasHeight * devicePixelRatio;
-        canvas.width = scaledWidth;
-        canvas.height = scaledHeight;
-
-        // Set the canvas CSS size to the desired width and height
-        canvas.style.width = `${scaledWidth}px`;
-        canvas.style.height = `${scaledHeight}px`;
-
-        // Optionally, scale the context to draw at the desired resolution
-        ctx.scale(devicePixelRatio, devicePixelRatio);
-      };
     </script>
-    <script async type="text/javascript" src="index.js"></script>
+    <script async type="text/javascript" src="renderer.js"></script>
   </body>
 </html>
