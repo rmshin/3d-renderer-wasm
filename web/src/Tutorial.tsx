@@ -1,13 +1,13 @@
 import { Show } from 'solid-js/web';
 
-import styles from './Intro.module.css';
 import { createSignal } from 'solid-js';
+import styles from './Tutorial.module.css';
 
-const IntroScreen = () => {
-  const [showIntro, setShowIntro] = createSignal(true);
+const Tutorial = () => {
+  const [showTutorial, setShowTutorial] = createSignal(true);
   return (
-    <Show when={showIntro()}>
-      <div class={styles.introPopup} onClick={() => setShowIntro(false)}>
+    <Show when={showTutorial()}>
+      <div class={styles.introPopup} onClick={() => setShowTutorial(false)}>
         <section class={styles.introContent} onClick={(e) => e.stopPropagation()}>
           <h1>hello sir welcome to my house</h1>
         </section>
@@ -16,4 +16,4 @@ const IntroScreen = () => {
   );
 };
 
-export default IntroScreen;
+export default Tutorial;

@@ -1,6 +1,6 @@
-import { onMount, type Component, onCleanup, createSignal, createEffect } from 'solid-js';
+import { onMount, type Component, onCleanup, createSignal } from 'solid-js';
 
-import IntroScreen from './Intro';
+import IntroScreen from './Tutorial';
 import styles from './App.module.css';
 
 const INPUT_FIELD = {
