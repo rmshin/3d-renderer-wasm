@@ -53,7 +53,6 @@ void array_reset(void *array)
 
     if (array != NULL)
     {
-
         int *base = ARRAY_RAW_DATA(array);
         base[1] = 0;
     }

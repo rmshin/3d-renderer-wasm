@@ -49,10 +49,15 @@ void setup(void)
 
     init_frustum_planes(fov_x, fov_y, znear, zfar);
 
+#ifdef __EMSCRIPTEN__
+    load_single_mesh("sphere");
+#endif
+#ifndef __EMSCRIPTEN__
     load_mesh("./assets/efa.obj", "./assets/efa.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){-3, 0, 3});
     load_mesh("./assets/f22.obj", "./assets/f22.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){3, 0, 7});
     // load_mesh("./assets/f117.obj", "./assets/f117.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){0, -5, 5});
     load_mesh("./assets/cube.obj", "./assets/cube.png", (vec3_t){1, 1, 1}, (vec3_t){0, 0, 0}, (vec3_t){0, -5, 5});
+#endif
 };
 
 void process_input(void)
@@ -274,11 +279,23 @@ void draw_triangles(void)
         }
         if (should_render_texture())
         {
-            draw_textured_triangle(
-                triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.tex_coords[0].u, triangle.tex_coords[0].v,
-                triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.tex_coords[1].u, triangle.tex_coords[1].v,
-                triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.tex_coords[2].u, triangle.tex_coords[2].v,
-                triangle.texture, triangle.shading_factor);
+            // only render textured if exists, otherwise render fill
+            if (triangle.texture != NULL)
+            {
+                draw_textured_triangle(
+                    triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.tex_coords[0].u, triangle.tex_coords[0].v,
+                    triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.tex_coords[1].u, triangle.tex_coords[1].v,
+                    triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.tex_coords[2].u, triangle.tex_coords[2].v,
+                    triangle.texture, triangle.shading_factor);
+            }
+            else
+            {
+                draw_filled_triangle(
+                    triangle.points[0].x, triangle.points[0].y, triangle.points[0].w,
+                    triangle.points[1].x, triangle.points[1].y, triangle.points[1].w,
+                    triangle.points[2].x, triangle.points[2].y, triangle.points[2].w,
+                    triangle.colour);
+            }
         }
         if (should_render_wireframe())
         {

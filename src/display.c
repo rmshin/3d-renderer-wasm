@@ -101,13 +101,6 @@ bool initialize_window(void)
     window_width = window_width * pixel_ratio;
     window_height = window_height * pixel_ratio;
 
-    // scale to proper resolution for high dpi displays
-    EmscriptenFullscreenStrategy strategy;
-    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF;
-    strategy.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF;
-    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
-    strategy.canvasResizedCallbackUserData = NULL;
-    emscripten_enter_soft_fullscreen("canvas", &strategy);
     emscripten_set_element_css_size("canvas", (double)window_width, (double)window_height);
 
 #endif

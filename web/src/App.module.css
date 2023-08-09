@@ -1,0 +1,11 @@
+.App {
+  text-align: center;
+}
+
+.controlMenu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  color: white;
+  background-color: transparent;
+}

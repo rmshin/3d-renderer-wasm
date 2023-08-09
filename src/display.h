@@ -7,11 +7,11 @@
 
 typedef enum
 {
-    DISPLAY_VERTEX,
-    DISPLAY_WIRE,
-    DISPLAY_FILL,
-    DISPLAY_FILL_WIRE,
-    DISPLAY_TEXTURE,
+    DISPLAY_VERTEX = 0,
+    DISPLAY_WIRE = 1,
+    DISPLAY_FILL = 3,
+    DISPLAY_FILL_WIRE = 2,
+    DISPLAY_TEXTURE = 4,
 } DisplayMode_t;
 
 typedef enum
