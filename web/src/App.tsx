@@ -1,8 +1,11 @@
 import type { Component } from 'solid-js';
-import { onMount, onCleanup, createSignal } from 'solid-js';
+import { onMount, onCleanup, createSignal, Show } from 'solid-js';
 
 import IntroScreen from './Tutorial';
+import device from './device.ts';
 import styles from './App.module.css';
+import cmSvgUrl from '../assets/control-menu-icon.svg';
+import xSvgUrl from '../assets/x-icon.svg';
 import ghSvgUrl from '../assets/github-icon.svg';
 
 // these values must be the same as those defined in wasm
@@ -32,27 +35,8 @@ const ROTATE_MODEL = 'rotate-model';
 
 const [displayMode, setDisplayMode] = createSignal(DISPLAY_MODE.WIRE); // hard-coded default within WASM
 const [model, setModel] = createSignal(MODEL.SPHERE); // hard-coded default within WASM
-
-function isTextureDisabled() {
-  return model() === MODEL.SPHERE || model() === MODEL.CUBE;
-}
-
-function isOptionChecked(option: string) {
-  switch (option) {
-    case DISPLAY_MODE.VERTEX:
-    case DISPLAY_MODE.WIRE:
-    case DISPLAY_MODE.FILL_WIRE:
-      return displayMode() === option;
-    case DISPLAY_MODE.FILL:
-      return (
-        displayMode() == option || (displayMode() == DISPLAY_MODE.TEXTURE && isTextureDisabled())
-      );
-    case DISPLAY_MODE.TEXTURE:
-      return displayMode() == option && !isTextureDisabled();
-  }
-}
-
 const [showShortcuts, setShowShortcuts] = createSignal(false);
+const [showControlMenu, setShowControlMenu] = createSignal(true);
 
 const App: Component = () => {
   onMount(() => {
@@ -75,7 +59,7 @@ const App: Component = () => {
           break;
         // UI-only shortcut
         case ' ':
-          setShowShortcuts(true);
+          if (!device.isTouch) setShowShortcuts(true);
           break;
         default:
           break;
@@ -115,21 +99,41 @@ const App: Component = () => {
 
   return (
     <>
-      <div class={styles.controlMenu}>
+      <Show when={!device.isLargeScreen}>
+        {!showControlMenu() && (
+          <img
+            class={styles.controlMenuIcon}
+            src={cmSvgUrl}
+            onClick={() => setShowControlMenu(true)}
+          />
+        )}
+      </Show>
+
+      <div
+        class={`${styles.controlMenu} ${
+          !showControlMenu() && !device.isLargeScreen ? styles.hidden : ''
+        }`}
+      >
         <ModelSelect />
         <DisplayOptions />
         <ToggleActions />
+        <button class={styles.controlMenuClose} onClick={() => setShowControlMenu(false)}>
+          <img src={xSvgUrl} />
+          close
+        </button>
       </div>
 
-      {showShortcuts() ? (
-        <p class={styles.shortcutsTip}>
-          &#8592;&nbsp;(A) &nbsp; &#8593;&nbsp;(W) &nbsp; &#8595;&nbsp;(S) &nbsp; &#8594;&nbsp;(D)
-        </p>
-      ) : (
-        <p class={styles.shortcutsTip}>
-          Press <span>space</span> to view shortcuts
-        </p>
-      )}
+      <Show when={!device.isTouch}>
+        {showShortcuts() ? (
+          <p class={styles.shortcutsTip}>
+            &#8592;&nbsp;(A) &nbsp; &#8593;&nbsp;(W) &nbsp; &#8595;&nbsp;(S) &nbsp; &#8594;&nbsp;(D)
+          </p>
+        ) : (
+          <p class={styles.shortcutsTip}>
+            Press <span>space</span> to view shortcuts
+          </p>
+        )}
+      </Show>
       <a
         class={styles.githubIconLink}
         href="https://github.com/rmshin/3d-renderer-wasm"
@@ -175,6 +179,24 @@ const ModelSelect = () => {
     </fieldset>
   );
 };
+
+function isTextureDisabled() {
+  return model() === MODEL.SPHERE || model() === MODEL.CUBE;
+}
+function isOptionChecked(option: string) {
+  switch (option) {
+    case DISPLAY_MODE.VERTEX:
+    case DISPLAY_MODE.WIRE:
+    case DISPLAY_MODE.FILL_WIRE:
+      return displayMode() === option;
+    case DISPLAY_MODE.FILL:
+      return (
+        displayMode() == option || (displayMode() == DISPLAY_MODE.TEXTURE && isTextureDisabled())
+      );
+    case DISPLAY_MODE.TEXTURE:
+      return displayMode() == option && !isTextureDisabled();
+  }
+}
 
 const DisplayOptions = () => {
   return (

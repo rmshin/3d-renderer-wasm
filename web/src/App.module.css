@@ -1,6 +1,9 @@
 .App {
   text-align: center;
 }
+.hidden {
+  display: none;
+}
 
 .controlMenu {
   position: fixed;
@@ -9,10 +12,66 @@
   background-color: transparent;
   margin-top: 0.5rem;
   margin-right: 1rem;
+  overflow-y: scroll;
 }
-
+/* Hide scrollbar for Chrome, Safari and Opera */
+.controlMenu::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.controlMenu {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 .controlMenu fieldset {
   margin-bottom: 0.5rem;
+}
+.controlMenuClose {
+  display: none;
+}
+.controlMenuIcon {
+  display: none;
+}
+@media (max-width: 992px) {
+  .controlMenu {
+    backdrop-filter: blur(0.4rem);
+    padding: 1rem;
+    margin-right: 0.5rem;
+  }
+  .controlMenuClose {
+    border: none;
+    font-size: 1.2rem;
+    display: initial;
+    float: right;
+    margin-top: 1rem;
+    background-color: transparent;
+    color: white;
+    text-decoration: underline;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+  }
+  .controlMenuClose:hover {
+    cursor: pointer;
+  }
+  .controlMenuClose img {
+    display: inline-block;
+    width: 1rem;
+    margin-right: 0.3rem;
+    margin-bottom: -0.2rem;
+  }
+  .controlMenuIcon {
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin-top: 1rem;
+    margin-right: 1rem;
+    width: 2rem;
+    display: initial;
+  }
+  .controlMenuIcon:hover {
+    cursor: pointer;
+  }
 }
 
 .modelSelect {
@@ -66,7 +125,11 @@
 .githubIconLink:hover {
   opacity: 1;
 }
-
 .githubIconLink img {
   width: 2rem;
+}
+@media (max-width: 768px) {
+  .githubIconLink img {
+    width: 1.5rem;
+  }
 }
