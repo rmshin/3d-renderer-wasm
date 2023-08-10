@@ -349,6 +349,15 @@ int main(void)
     prev_frame_time = 0;
     is_running = false;
     left_mouse_down = false;
+
+#ifdef __EMSCRIPTEN__
+    // webgl context
+    EmscriptenWebGLContextAttributes gl_ctx;
+    emscripten_webgl_init_context_attributes(&gl_ctx);
+    int ctx_handle = emscripten_webgl_create_context("canvas", &gl_ctx);
+    emscripten_webgl_make_context_current(ctx_handle);
+#endif
+
     // create an SDL window
     is_running = initialize_window();
 

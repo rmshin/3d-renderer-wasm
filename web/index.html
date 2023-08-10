@@ -60,7 +60,6 @@
       // Initialize SDL2 Module
       Module['onRuntimeInitialized'] = () => {
         const canvas = Module['canvas']; // Get the canvas element created by SDL2
-        const ctx = canvas.getContext('2d');
 
         // Scale the canvas resolution based on the devicePixelRatio
         const scaledWidth = canvasWidth * devicePixelRatio;
@@ -71,9 +70,6 @@
         // Set the canvas CSS size to the desired width and height
         canvas.style.width = `${scaledWidth}px`;
         canvas.style.height = `${scaledHeight}px`;
-
-        // Optionally, scale the context to draw at the desired resolution
-        ctx.scale(devicePixelRatio, devicePixelRatio);
       };
     </script>
     <script async type="text/javascript" src="renderer.js"></script>

@@ -1,18 +1,10 @@
-import { onMount, type Component, onCleanup, createSignal } from 'solid-js';
+import type { Component } from 'solid-js';
+import { onMount, onCleanup, createSignal } from 'solid-js';
 
 import IntroScreen from './Tutorial';
 import styles from './App.module.css';
 
-const INPUT_FIELD = {
-  VERTEX: 'vertices',
-  WIRE: 'wireframe',
-  FILL_WIRE: 'fill-wireframe',
-  FILL: 'fill',
-  TEXTURE: 'texture',
-  ROTATE: 'rotate-models',
-};
-
-// these must be the same as those defined in wasm compiled code
+// these values must be the same as those defined in wasm
 const MODEL = {
   SPHERE: 'sphere',
   CUBE: 'cube',
@@ -24,37 +16,57 @@ const MODEL = {
   ALL: 'all',
 };
 
+// these values must be the same as those defined in wasm
+// entry order matters
+const DISPLAY_MODE = {
+  VERTEX: 'vertices', // 0
+  WIRE: 'wireframe', // 1
+  FILL_WIRE: 'fill-wireframe', // 2
+  FILL: 'fill', // 3
+  TEXTURE: 'texture', // 4
+};
+
+const ROTATE_MODEL = 'rotate-model';
+
+const [displayMode, setDisplayMode] = createSignal(DISPLAY_MODE.WIRE); // hard-coded default within WASM
+const [model, setModel] = createSignal(MODEL.SPHERE); // hard-coded default within WASM
+
+function isTextureDisabled() {
+  return model() === MODEL.SPHERE || model() === MODEL.CUBE;
+}
+
+function isOptionChecked(option: string) {
+  switch (option) {
+    case DISPLAY_MODE.VERTEX:
+    case DISPLAY_MODE.WIRE:
+    case DISPLAY_MODE.FILL_WIRE:
+      return displayMode() === option;
+    case DISPLAY_MODE.FILL:
+      return (
+        displayMode() == option || (displayMode() == DISPLAY_MODE.TEXTURE && isTextureDisabled())
+      );
+    case DISPLAY_MODE.TEXTURE:
+      return displayMode() == option && !isTextureDisabled();
+  }
+}
+
 const App: Component = () => {
   onMount(() => {
-    // mimic the keyboard shortcuts implemented
-    // within the compiled wasm code
+    // mirror the keyboard shortcuts implemented within wasm
     function handleKeypress(e: KeyboardEvent) {
       let el;
       switch (e.key) {
         case '1':
-          el = document.getElementById(INPUT_FIELD.VERTEX) as HTMLInputElement;
-          el.checked = true;
-          break;
         case '2':
-          el = document.getElementById(INPUT_FIELD.WIRE) as HTMLInputElement;
-          el.checked = true;
-          break;
         case '3':
-          el = document.getElementById(INPUT_FIELD.FILL_WIRE) as HTMLInputElement;
-          el.checked = true;
-          break;
         case '4':
-          el = document.getElementById(INPUT_FIELD.FILL) as HTMLInputElement;
-          el.checked = true;
-          break;
         case '5':
-          if (!textureDisabled()) {
-            el = document.getElementById(INPUT_FIELD.TEXTURE) as HTMLInputElement;
-            el.checked = true;
-          }
+          const idx = parseInt(e.key) - 1;
+          const newDisplayMode = Object.values(DISPLAY_MODE)[idx];
+          setDisplayMode(newDisplayMode);
           break;
         case 'r':
-          el = document.getElementById(INPUT_FIELD.ROTATE) as HTMLInputElement;
+          el = document.getElementById(ROTATE_MODEL) as HTMLInputElement;
           el.checked = !el.checked;
           break;
         default:
@@ -88,24 +100,15 @@ const ModelSelect = () => {
         name="model"
         id="model-select"
         onChange={(e) => {
+          setModel(e.target.value);
+          // exported wasm functions
           // handle displaying all meshes separately
           if (e.target.value == MODEL.ALL) {
-            // exported wasm function
             _load_all_meshes();
-            setTextureDisabled(false);
-            return;
-          }
-          // exported wasm function
-          const ptr = stringToNewUTF8(e.target.value);
-          _load_single_mesh(ptr);
-          _free(ptr);
-
-          const hasTexture = _mesh_has_texture(Object.keys(MODEL).indexOf(e.target.value));
-          setTextureDisabled(!hasTexture);
-          // change selected display option to "fill" in case no texture is available
-          if (!hasTexture) {
-            const fillEl = document.getElementById(INPUT_FIELD.FILL) as HTMLInputElement;
-            fillEl.click();
+          } else {
+            const ptr = stringToNewUTF8(e.target.value);
+            _load_single_mesh(ptr);
+            _free(ptr);
           }
         }}
       >
@@ -122,48 +125,73 @@ const ModelSelect = () => {
   );
 };
 
-const [textureDisabled, setTextureDisabled] = createSignal(true);
-
 const DisplayOptions = () => {
   return (
     <fieldset
       id="display-options"
       onChange={(e) => {
+        const idx = parseInt(e.target.value);
+        setDisplayMode(Object.values(DISPLAY_MODE)[idx]);
         // exported wasm function
-        _set_display_mode(parseInt(e.target.value));
+        _set_display_mode(idx);
       }}
     >
       <legend>Display mode:</legend>
 
       <div>
-        <input type="radio" id={INPUT_FIELD.VERTEX} name="display" value="0" />
-        <label for={INPUT_FIELD.VERTEX}>Vertices</label>
-      </div>
-
-      <div>
-        <input type="radio" id={INPUT_FIELD.WIRE} name="display" value="1" checked />
-        <label for={INPUT_FIELD.WIRE}>Wireframe</label>
-      </div>
-
-      <div>
-        <input type="radio" id={INPUT_FIELD.FILL_WIRE} name="display" value="2" />
-        <label for={INPUT_FIELD.FILL_WIRE}>Wireframe with fill</label>
-      </div>
-
-      <div>
-        <input type="radio" id={INPUT_FIELD.FILL} name="display" value="3" />
-        <label for={INPUT_FIELD.FILL}>Fill</label>
+        <input
+          type="radio"
+          id={DISPLAY_MODE.VERTEX}
+          name="display"
+          value="0"
+          checked={isOptionChecked(DISPLAY_MODE.VERTEX)}
+        />
+        <label for={DISPLAY_MODE.VERTEX}>Vertices</label>
       </div>
 
       <div>
         <input
           type="radio"
-          id={INPUT_FIELD.TEXTURE}
+          id={DISPLAY_MODE.WIRE}
+          name="display"
+          value="1"
+          checked={isOptionChecked(DISPLAY_MODE.WIRE)}
+        />
+        <label for={DISPLAY_MODE.WIRE}>Wireframe</label>
+      </div>
+
+      <div>
+        <input
+          type="radio"
+          id={DISPLAY_MODE.FILL_WIRE}
+          name="display"
+          value="2"
+          checked={isOptionChecked(DISPLAY_MODE.FILL_WIRE)}
+        />
+        <label for={DISPLAY_MODE.FILL_WIRE}>Wireframe with fill</label>
+      </div>
+
+      <div>
+        <input
+          type="radio"
+          id={DISPLAY_MODE.FILL}
+          name="display"
+          value="3"
+          checked={isOptionChecked(DISPLAY_MODE.FILL)}
+        />
+        <label for={DISPLAY_MODE.FILL}>Fill</label>
+      </div>
+
+      <div>
+        <input
+          type="radio"
+          id={DISPLAY_MODE.TEXTURE}
           name="display"
           value="4"
-          disabled={textureDisabled()}
+          disabled={isTextureDisabled()}
+          checked={isOptionChecked(DISPLAY_MODE.TEXTURE)}
         />
-        <label for={INPUT_FIELD.TEXTURE}>Texture</label>
+        <label for={DISPLAY_MODE.TEXTURE}>Texture</label>
       </div>
     </fieldset>
   );
@@ -177,14 +205,14 @@ const ToggleActions = () => {
       <div>
         <input
           type="checkbox"
-          id={INPUT_FIELD.ROTATE}
-          name={INPUT_FIELD.ROTATE}
+          id={ROTATE_MODEL}
+          name={ROTATE_MODEL}
           onChange={(e) => {
             // exported wasm function
             e.target.checked ? _set_rotation_mode(1) : _set_rotation_mode(0);
           }}
         />
-        <label for={INPUT_FIELD.ROTATE}>Rotate model</label>
+        <label for={ROTATE_MODEL}>Rotate model</label>
       </div>
     </fieldset>
   );
