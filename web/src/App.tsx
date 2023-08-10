@@ -27,6 +27,7 @@ const DISPLAY_MODE = {
   TEXTURE: 'texture', // 4
 };
 
+const MODEL_SELECT = 'model-select';
 const ROTATE_MODEL = 'rotate-model';
 
 const [displayMode, setDisplayMode] = createSignal(DISPLAY_MODE.WIRE); // hard-coded default within WASM
@@ -96,6 +97,22 @@ const App: Component = () => {
     });
   });
 
+  // blur model-select field upon click outside to avoid
+  // conflicting "space" key press with shortcuts
+  onMount(() => {
+    const selectEl = document.getElementById(MODEL_SELECT) as HTMLSelectElement;
+    function handleOutsideClick(e: MouseEvent) {
+      const el = e.target as HTMLElement;
+      if (!el.contains(selectEl)) {
+        selectEl.blur();
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    onCleanup(() => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    });
+  });
+
   return (
     <>
       <div class={styles.controlMenu}>
@@ -131,7 +148,7 @@ const ModelSelect = () => {
       <legend>Model:</legend>
       <select
         name="model"
-        id="model-select"
+        id={MODEL_SELECT}
         class={styles.modelSelect}
         onChange={(e) => {
           setModel(e.target.value);
@@ -144,9 +161,6 @@ const ModelSelect = () => {
             _load_single_mesh(ptr);
             _free(ptr);
           }
-
-          // blur select due to conflicting "space" key press
-          e.target.blur();
         }}
       >
         <option value={MODEL.SPHERE}>Sphere</option>
