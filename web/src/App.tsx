@@ -3,6 +3,7 @@ import { onMount, onCleanup, createSignal } from 'solid-js';
 
 import IntroScreen from './Tutorial';
 import styles from './App.module.css';
+import ghSvgUrl from '../assets/github-icon.svg';
 
 // these values must be the same as those defined in wasm
 const MODEL = {
@@ -50,10 +51,12 @@ function isOptionChecked(option: string) {
   }
 }
 
+const [showShortcuts, setShowShortcuts] = createSignal(false);
+
 const App: Component = () => {
   onMount(() => {
     // mirror the keyboard shortcuts implemented within wasm
-    function handleKeypress(e: KeyboardEvent) {
+    function handleKeydown(e: KeyboardEvent) {
       let el;
       switch (e.key) {
         case '1':
@@ -69,14 +72,27 @@ const App: Component = () => {
           el = document.getElementById(ROTATE_MODEL) as HTMLInputElement;
           el.checked = !el.checked;
           break;
+        // UI-only shortcut
+        case ' ':
+          setShowShortcuts(true);
+          break;
         default:
           break;
       }
     }
-    document.addEventListener('keydown', handleKeypress);
+
+    function handleKeyup(e: KeyboardEvent) {
+      if (e.key === ' ') {
+        setShowShortcuts(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeydown);
+    document.addEventListener('keyup', handleKeyup);
 
     onCleanup(() => {
-      document.removeEventListener('keydown', handleKeypress);
+      document.removeEventListener('keydown', handleKeydown);
+      document.removeEventListener('keyup', handleKeyup);
     });
   });
 
@@ -87,6 +103,23 @@ const App: Component = () => {
         <DisplayOptions />
         <ToggleActions />
       </div>
+
+      {showShortcuts() ? (
+        <p class={styles.shortcutsTip}>
+          &#8592;&nbsp;(A) &nbsp; &#8593;&nbsp;(W) &nbsp; &#8595;&nbsp;(S) &nbsp; &#8594;&nbsp;(D)
+        </p>
+      ) : (
+        <p class={styles.shortcutsTip}>
+          Press <span>space</span> to view shortcuts
+        </p>
+      )}
+      <a
+        class={styles.githubIconLink}
+        href="https://github.com/rmshin/3d-renderer-wasm"
+        target="_blank"
+      >
+        <img src={ghSvgUrl} />
+      </a>
       <IntroScreen />
     </>
   );
@@ -94,11 +127,12 @@ const App: Component = () => {
 
 const ModelSelect = () => {
   return (
-    <div>
-      <label for="model-select">Model:</label>
+    <fieldset>
+      <legend>Model:</legend>
       <select
         name="model"
         id="model-select"
+        class={styles.modelSelect}
         onChange={(e) => {
           setModel(e.target.value);
           // exported wasm functions
@@ -110,6 +144,9 @@ const ModelSelect = () => {
             _load_single_mesh(ptr);
             _free(ptr);
           }
+
+          // blur select due to conflicting "space" key press
+          e.target.blur();
         }}
       >
         <option value={MODEL.SPHERE}>Sphere</option>
@@ -121,7 +158,7 @@ const ModelSelect = () => {
         <option value={MODEL.F117}>F-117 Nighthawk</option>
         <option value={MODEL.ALL}>All models</option>
       </select>
-    </div>
+    </fieldset>
   );
 };
 
@@ -135,6 +172,7 @@ const DisplayOptions = () => {
         // exported wasm function
         _set_display_mode(idx);
       }}
+      class={styles.displayOptions}
     >
       <legend>Display mode:</legend>
 
@@ -147,6 +185,7 @@ const DisplayOptions = () => {
           checked={isOptionChecked(DISPLAY_MODE.VERTEX)}
         />
         <label for={DISPLAY_MODE.VERTEX}>Vertices</label>
+        {showShortcuts() && <span> (1)</span>}
       </div>
 
       <div>
@@ -158,6 +197,7 @@ const DisplayOptions = () => {
           checked={isOptionChecked(DISPLAY_MODE.WIRE)}
         />
         <label for={DISPLAY_MODE.WIRE}>Wireframe</label>
+        {showShortcuts() && <span> (2)</span>}
       </div>
 
       <div>
@@ -168,7 +208,8 @@ const DisplayOptions = () => {
           value="2"
           checked={isOptionChecked(DISPLAY_MODE.FILL_WIRE)}
         />
-        <label for={DISPLAY_MODE.FILL_WIRE}>Wireframe with fill</label>
+        <label for={DISPLAY_MODE.FILL_WIRE}>Wireframe w/ fill</label>
+        {showShortcuts() && <span> (3)</span>}
       </div>
 
       <div>
@@ -180,6 +221,7 @@ const DisplayOptions = () => {
           checked={isOptionChecked(DISPLAY_MODE.FILL)}
         />
         <label for={DISPLAY_MODE.FILL}>Fill</label>
+        {showShortcuts() && <span> (4)</span>}
       </div>
 
       <div>
@@ -192,6 +234,7 @@ const DisplayOptions = () => {
           checked={isOptionChecked(DISPLAY_MODE.TEXTURE)}
         />
         <label for={DISPLAY_MODE.TEXTURE}>Texture</label>
+        {showShortcuts() && <span> (5)</span>}
       </div>
     </fieldset>
   );
@@ -199,7 +242,7 @@ const DisplayOptions = () => {
 
 const ToggleActions = () => {
   return (
-    <fieldset>
+    <fieldset class={styles.modelActions}>
       <legend>Actions:</legend>
 
       <div>
@@ -213,6 +256,7 @@ const ToggleActions = () => {
           }}
         />
         <label for={ROTATE_MODEL}>Rotate model</label>
+        {showShortcuts() && <span> (r)</span>}
       </div>
     </fieldset>
   );

@@ -1,5 +1,4 @@
 .introPopup {
-  color: white;
   position: fixed;
   top: 0;
   left: 0;
@@ -13,6 +12,18 @@
 }
 
 .introContent {
-  padding: 5rem;
+  padding: 2.5rem 5rem;
   border: 1px solid white;
+  margin: 0.5rem;
+  max-width: 40rem;
+}
+
+.controlsList {
+  list-style: none;
+  padding: 0;
+}
+
+.controlsList li::before {
+  content: '\2022';
+  margin-right: 0.5rem;
 }
