@@ -54,22 +54,22 @@
       const devicePixelRatio = window.devicePixelRatio || 1;
 
       // Set the desired canvas width and height
-      const canvasWidth = window.screen.width;
-      const canvasHeight = window.screen.height;
+      const canvasWidth = window.innerWidth;
+      const canvasHeight = window.innerHeight;
 
       // Initialize SDL2 Module
       Module['onRuntimeInitialized'] = () => {
         const canvas = Module['canvas']; // Get the canvas element created by SDL2
 
         // Scale the canvas resolution based on the devicePixelRatio
-        const scaledWidth = canvasWidth * devicePixelRatio;
-        const scaledHeight = canvasHeight * devicePixelRatio;
+        const scaledWidth = Math.round(canvasWidth * devicePixelRatio);
+        const scaledHeight = Math.round(canvasHeight * devicePixelRatio);
         canvas.width = scaledWidth;
         canvas.height = scaledHeight;
 
         // Set the canvas CSS size to the desired width and height
-        canvas.style.width = `${scaledWidth}px`;
-        canvas.style.height = `${scaledHeight}px`;
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
       };
     </script>
     <script async type="text/javascript" src="renderer.js"></script>

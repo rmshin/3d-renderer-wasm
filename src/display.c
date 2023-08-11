@@ -99,8 +99,6 @@ bool initialize_window(void)
     // ensure SDL window size is the same as web canvas size for proper scaling
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
     emscripten_webgl_get_drawing_buffer_size(ctx, &window_width, &window_height);
-    emscripten_set_canvas_element_size("#canvas", window_width, window_height);
-
 #endif
 
     // Create SDL window
