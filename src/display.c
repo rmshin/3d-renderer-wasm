@@ -96,13 +96,10 @@ bool initialize_window(void)
     window_height = fullscreen_window_height;
 
 #ifdef __EMSCRIPTEN__
-    // double pixel_ratio = emscripten_get_device_pixel_ratio();
-    // window_width = window_width * pixel_ratio;
-    // window_height = window_height * pixel_ratio;
-
+    // ensure SDL window size is the same as web canvas size for proper scaling
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
     emscripten_webgl_get_drawing_buffer_size(ctx, &window_width, &window_height);
-    emscripten_set_canvas_element_size("canvas", window_width, window_height);
+    emscripten_set_canvas_element_size("#canvas", window_width, window_height);
 
 #endif
 

@@ -36,7 +36,7 @@ const ROTATE_MODEL = 'rotate-model';
 const [displayMode, setDisplayMode] = createSignal(DISPLAY_MODE.WIRE); // hard-coded default within WASM
 const [model, setModel] = createSignal(MODEL.SPHERE); // hard-coded default within WASM
 const [showShortcuts, setShowShortcuts] = createSignal(false);
-const [showControlMenu, setShowControlMenu] = createSignal(true);
+const [showControlMenu, setShowControlMenu] = createSignal(false);
 
 const App: Component = () => {
   onMount(() => {
@@ -99,6 +99,14 @@ const App: Component = () => {
 
   return (
     <>
+      {/* github link icon is positioned above control menu to blur properly in mobile */}
+      <a
+        class={styles.githubIconLink}
+        href="https://github.com/rmshin/3d-renderer-wasm"
+        target="_blank"
+      >
+        <img src={ghSvgUrl} />
+      </a>
       <Show when={!device.isLargeScreen}>
         {!showControlMenu() && (
           <img
@@ -134,13 +142,6 @@ const App: Component = () => {
           </p>
         )}
       </Show>
-      <a
-        class={styles.githubIconLink}
-        href="https://github.com/rmshin/3d-renderer-wasm"
-        target="_blank"
-      >
-        <img src={ghSvgUrl} />
-      </a>
       <IntroScreen />
     </>
   );
@@ -269,7 +270,9 @@ const DisplayOptions = () => {
           disabled={isTextureDisabled()}
           checked={isOptionChecked(DISPLAY_MODE.TEXTURE)}
         />
-        <label for={DISPLAY_MODE.TEXTURE}>Texture</label>
+        <label class={isTextureDisabled() ? styles.disabled : ''} for={DISPLAY_MODE.TEXTURE}>
+          Texture
+        </label>
         {showShortcuts() && <span> (5)</span>}
       </div>
     </fieldset>

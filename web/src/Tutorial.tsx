@@ -15,10 +15,9 @@ const Tutorial = () => {
           {device.isTouch ? (
             <>
               <p>This is a web demo of a simple software-based 3d renderer written in C.</p>
-              <p>Navigate the screen with the controllor at the bottom left corner.</p>
+              <p>Use two fingers to zoom in & out, and one finger to rotate view.</p>
               <p>
-                Toggle through different 3d models & rendering modes using the control menu at the
-                top right to.
+                You can toggle through different 3d models & rendering modes using the control menu.
               </p>
             </>
           ) : (

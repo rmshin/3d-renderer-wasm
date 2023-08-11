@@ -149,6 +149,22 @@ void process_input(void)
                 left_mouse_down = true;
             }
             break;
+        case SDL_MULTIGESTURE:
+            if (event.mgesture.numFingers == 2)
+            {
+                if (event.mgesture.dDist > 0)
+                {
+                    // Zoom in (pinch)
+                    set_camera_forward_velocity(vec3_mul(get_camera_direction(), 5.0 * delta_time));
+                    set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
+                }
+                else if (event.mgesture.dDist < 0)
+                {
+                    // Zoom out (spread)
+                    set_camera_forward_velocity(vec3_mul(get_camera_direction(), 5.0 * delta_time));
+                    set_camera_position(vec3_subtract(get_camera_position(), get_camera_forward_velocity()));
+                }
+            }
         }
     }
 };
@@ -354,7 +370,7 @@ int main(void)
     // webgl context
     EmscriptenWebGLContextAttributes gl_ctx;
     emscripten_webgl_init_context_attributes(&gl_ctx);
-    int ctx_handle = emscripten_webgl_create_context("canvas", &gl_ctx);
+    int ctx_handle = emscripten_webgl_create_context("#canvas", &gl_ctx);
     emscripten_webgl_make_context_current(ctx_handle);
 #endif
 
