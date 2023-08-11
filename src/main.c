@@ -134,7 +134,7 @@ void process_input(void)
             if (left_mouse_down)
             {
                 rotate_camera_yaw(event.motion.xrel * delta_time * MOUSE_SENSITIVITY);
-                rotate_camera_pitch(-event.motion.yrel * delta_time * MOUSE_SENSITIVITY);
+                rotate_camera_pitch(event.motion.yrel * delta_time * MOUSE_SENSITIVITY);
             }
             break;
         case SDL_MOUSEBUTTONUP:
