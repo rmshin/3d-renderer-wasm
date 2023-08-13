@@ -80,3 +80,10 @@ void rotate_camera_pitch(float p)
         camera.pitch = M_PI / 2 - 0.05;
     }
 };
+void reset_camera(void)
+{
+    init_camera(
+        (vec3_t){0, 0, 0}, // position
+        (vec3_t){0, 0, 1}  // direction
+    );
+};

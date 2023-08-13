@@ -174,6 +174,7 @@ void free_mesh_resources(void)
     {
         array_free(meshes[m].vertices);
         array_free(meshes[m].faces);
-        upng_free(meshes[m].texture);
+        if (meshes[m].texture != NULL)
+            upng_free(meshes[m].texture);
     }
 }

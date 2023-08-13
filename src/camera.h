@@ -28,5 +28,6 @@ void set_camera_direction(vec3_t d);
 void set_camera_forward_velocity(vec3_t v);
 void rotate_camera_yaw(float y);
 void rotate_camera_pitch(float p);
+void reset_camera(void);
 
 #endif

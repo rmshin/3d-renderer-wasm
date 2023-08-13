@@ -101,6 +101,13 @@ void process_input(void)
             is_running = false;
             break;
         case SDL_KEYDOWN:
+#ifndef __EMSCRIPTEN__
+            if (event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                is_running = false;
+                break;
+            }
+#endif
             if (event.key.keysym.sym == SDLK_1)
             {
                 set_display_mode(DISPLAY_VERTEX);
@@ -128,6 +135,10 @@ void process_input(void)
             else if (event.key.keysym.sym == SDLK_r)
             {
                 get_rotation_mode() == ROTATE_NONE ? set_rotation_mode(ROTATE_AUTO) : set_rotation_mode(ROTATE_NONE);
+            }
+            else if (event.key.keysym.sym == SDLK_q)
+            {
+                reset_camera();
             }
             break;
         case SDL_MOUSEMOTION:
@@ -349,15 +360,14 @@ void mainLoop(void)
     update();
     render();
 
+#ifdef __EMSCRIPTEN__
     if (!is_running)
     {
-#ifdef __EMSCRIPTEN__
         emscripten_cancel_main_loop();
-#endif
-
         destroy_window();
         free_resources();
     }
+#endif
 };
 
 int main(void)
@@ -383,7 +393,11 @@ int main(void)
 #endif
 #ifndef __EMSCRIPTEN__
     while (is_running)
+    {
         mainLoop();
+    }
+    destroy_window();
+    free_resources();
 #endif
 
     return 0;

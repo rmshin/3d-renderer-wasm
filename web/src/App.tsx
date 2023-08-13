@@ -124,7 +124,7 @@ const App: Component = () => {
       >
         <ModelSelect />
         <DisplayOptions />
-        <ToggleActions />
+        <Actions />
         <button class={styles.controlMenuClose} onClick={() => setShowControlMenu(false)}>
           <img src={xSvgUrl} />
           close
@@ -160,10 +160,14 @@ const ModelSelect = () => {
           // exported wasm functions
           // handle displaying all meshes separately
           if (e.target.value == MODEL.ALL) {
+            // @ts-ignore
             _load_all_meshes();
           } else {
+            // @ts-ignore
             const ptr = stringToNewUTF8(e.target.value);
+            // @ts-ignore
             _load_single_mesh(ptr);
+            // @ts-ignore
             _free(ptr);
           }
         }}
@@ -204,9 +208,11 @@ const DisplayOptions = () => {
     <fieldset
       id="display-options"
       onChange={(e) => {
-        const idx = parseInt(e.target.value);
+        const target = e.target as HTMLInputElement;
+        const idx = parseInt(target.value);
         setDisplayMode(Object.values(DISPLAY_MODE)[idx]);
         // exported wasm function
+        // @ts-ignore
         _set_display_mode(idx);
       }}
       class={styles.displayOptions}
@@ -279,11 +285,10 @@ const DisplayOptions = () => {
   );
 };
 
-const ToggleActions = () => {
+const Actions = () => {
   return (
-    <fieldset class={styles.modelActions}>
+    <fieldset class={styles.actions}>
       <legend>Actions:</legend>
-
       <div>
         <input
           type="checkbox"
@@ -291,11 +296,25 @@ const ToggleActions = () => {
           name={ROTATE_MODEL}
           onChange={(e) => {
             // exported wasm function
+            // @ts-ignore
             e.target.checked ? _set_rotation_mode(1) : _set_rotation_mode(0);
           }}
         />
         <label for={ROTATE_MODEL}>Rotate model</label>
         {showShortcuts() && <span> (r)</span>}
+      </div>
+
+      <div>
+        <button
+          class={styles.resetCameraButton}
+          onClick={() => {
+            // @ts-ignore
+            _reset_camera();
+          }}
+        >
+          Reset camera
+        </button>
+        {showShortcuts() && <span> (q)</span>}
       </div>
     </fieldset>
   );
