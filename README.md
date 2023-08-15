@@ -21,14 +21,14 @@ To install and run the project locally, you can simply clone the repo and compil
 
 The current Makefile is configured for M1/M2 Macs using homebrew:
 
-```
-gcc -L/opt/homebrew/lib -lSDL2 -lm -I/opt/homebrew/include [other_flags] ./src/*.c -o renderer
+```bash
+$ gcc -L/opt/homebrew/lib -lSDL2 -lm -I/opt/homebrew/include [other_flags] ./src/*.c -o renderer
 ```
 
 If you're using other Unix-like systems, you might be able to simply use:
 
-```
-gcc `sdl2-config --cflags --libs` [other_flags] ./src/*.c -o renderer
+```bash
+$ gcc `sdl2-config --cflags --libs` [other_flags] ./src/*.c -o renderer
 ```
 
 Once the renderer is running, you can control the camera perspective using the standard WASD control keys for movement and left mouse drag for rotation.
